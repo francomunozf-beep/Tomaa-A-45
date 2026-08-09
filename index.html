@@ -1,233 +1,114 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Toma A-45">
-<meta name="theme-color" content="#742774">
-<title>Toma de datos de terreno A-45</title>
-<style>
-:root{--p:#742774;--p2:#8e3b8e;--bg:#f4f5f7;--card:#fff;--line:#dfe2e7;--text:#202124;--muted:#697386;--green:#197a3d;--red:#b42318}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
-body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
-button,input{font:inherit}
-button{border:0;border-radius:12px;padding:13px 16px;font-weight:700;cursor:pointer}
-.primary{background:var(--p);color:white}.secondary{background:#e9ebef;color:#333}.danger{background:#b42318;color:white}
-header{height:62px;background:var(--p);color:white;padding:10px 16px;position:relative;z-index:20;box-shadow:0 2px 8px #0002;display:flex;align-items:center}
-.title{font-size:20px;font-weight:800;line-height:1.1}.sub{font-size:11px;opacity:.9;margin-top:3px}
-main{height:calc(100vh - 62px);position:relative}
-.screen{display:none;width:100%;height:100%}.screen.active{display:block}
-.start-wrap{height:100%;overflow:auto;padding:18px 14px 30px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:17px;margin-bottom:14px;box-shadow:0 2px 8px #0000000a}
-.info{display:flex;gap:8px;flex-wrap:wrap;font-size:13px}.pill{background:#f0edf2;padding:8px 10px;border-radius:20px}
-.start-title{font-size:24px;margin:0 0 10px}
-.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
-.field label{display:block;font-size:13px;font-weight:800;margin-bottom:7px;color:#4d174d}
-.field input{width:100%;padding:14px;border:1px solid #c7ccd4;border-radius:11px;font-size:20px;background:#fff}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.hint{font-size:12px;color:var(--muted);line-height:1.45}
-.session{height:100%;display:flex;flex-direction:column}
-.session-top{background:white;border-bottom:1px solid var(--line);padding:9px 12px;z-index:10}
-.top-row{display:flex;align-items:center;gap:8px}.top-row b{flex:1;text-align:center}
-.progress{height:6px;background:#e3e5e8;border-radius:20px;overflow:hidden;margin-top:8px}.bar{height:100%;background:var(--p);width:0;transition:width .2s}
-.counter{text-align:center;font-size:11px;color:var(--muted);margin-top:5px}
-.swipe-area{flex:1;min-height:0;position:relative;touch-action:pan-y;overflow:hidden}
-.slide{height:100%;overflow:auto;padding:14px 14px 30px;display:flex;align-items:flex-start;justify-content:center}
-.measure-card{width:100%;max-width:650px;background:white;border:1px solid var(--line);border-radius:20px;padding:22px 18px;box-shadow:0 4px 16px #00000012;min-height:72%}
-.section-badge{display:inline-block;background:#eee9f0;color:#4d174d;border-radius:999px;padding:8px 12px;font-size:13px;font-weight:800;margin-bottom:18px}
-.tag{font-size:30px;font-weight:900;letter-spacing:.2px}.equip{font-size:18px;margin-top:8px;color:#30343a}.param{font-size:16px;color:#555f6d;margin-top:10px}
-.range{font-size:13px;color:#697386;margin-top:14px;padding:10px;background:#f7f7f8;border-radius:10px}
-.previous-value{font-size:12px;color:#8a8f98;margin:7px 0 10px;text-align:center}.previous-value b{font-weight:700;color:#6f747d}.measure-input{margin-top:22px}.measure-input label{display:block;font-size:14px;font-weight:800;color:#4d174d;margin-bottom:8px}
-.measure-input input{width:100%;height:66px;border:2px solid #c7ccd4;border-radius:14px;padding:8px 14px;font-size:32px;text-align:center;background:#fff;outline:none}
-.measure-input input:focus{border-color:var(--p)}
-.state{text-align:center;margin-top:9px;font-size:13px;font-weight:900}.normal{color:var(--green)}.out{color:var(--red)}.pending{color:#727b87}
-.nav-hint{text-align:center;color:#8a919b;font-size:12px;margin-top:18px}
-.nav-buttons{display:flex;gap:10px;margin-top:18px}.nav-buttons button{flex:1}
-.footer-actions{padding:8px 12px;background:white;border-top:1px solid var(--line);display:flex;gap:8px}.footer-actions button{flex:1}
-#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 14px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
-#toast.show{opacity:1}
-.hist-wrap{height:100%;overflow:auto;padding:14px}.hist-table{background:white;border-radius:14px;overflow:auto;border:1px solid var(--line)}
-table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:8px;border-bottom:1px solid #eee;white-space:nowrap}
-@media(max-width:430px){.field-grid{grid-template-columns:1fr 1fr}.tag{font-size:28px}.measure-card{padding:20px 16px}.measure-input input{height:62px;font-size:30px}}
-</style>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#742774">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Toma A-45">
-<link rel="apple-touch-icon" href="icon-192.png">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+
+  <title>Toma de datos de terreno A-45</title>
+
+  <link rel="manifest" href="manifest.json">
+
+  <meta name="theme-color" content="#742774">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Toma A-45">
+
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-<header><div><div class="title">Toma de datos de terreno A-45</div><div class="sub">Registro de mediciones en terreno</div></div></header>
-<main>
-<section id="inicio" class="screen active">
-<div class="start-wrap">
-<div class="card">
-<h1 class="start-title">Iniciar</h1>
-<div class="info"><div class="pill">📅 <b id="fecha"></b></div><div class="pill">🕐 <b id="hora"></b></div><div class="pill">🔄 <b id="turno"></b></div></div>
-<div class="field-grid">
-<div class="field"><label for="purga">Purga (%)</label><input id="purga" type="number" step="any" inputmode="decimal" placeholder="0"></div>
-<div class="field"><label for="filtro">Filtro (mbar)</label><input id="filtro" type="number" step="any" inputmode="decimal" placeholder="0"></div>
-</div>
-<p class="hint">Ingresa estos dos valores al inicio. Luego cada elemento aparecerá individualmente. Al registrar un valor, la aplicación avanzará automáticamente al siguiente elemento.</p>
-<div class="actions">
-<button class="primary" onclick="iniciar()">Iniciar</button>
-<button class="secondary" onclick="historial()">Historial</button>
-<button class="secondary" onclick="exportar()">Exportar CSV</button>
-</div>
-</div>
-</div>
-</section>
 
-<section id="ronda" class="screen">
-<div class="session">
-<div class="session-top">
-<div class="top-row">
-<button class="secondary" onclick="inicio()">←</button>
-<b id="contexto"></b>
-<button class="primary" onclick="finalizar()">Finalizar</button>
-</div>
-<div class="progress"><div id="bar" class="bar"></div></div>
-<div id="progreso" class="counter"></div>
-</div>
-<div id="swipeArea" class="swipe-area">
-<div id="slide" class="slide"></div>
-</div>
-<div class="footer-actions">
-<button class="secondary" onclick="anterior()">← Anterior</button>
-<button class="secondary" onclick="siguiente()">Siguiente →</button>
-</div>
-</div>
-</section>
+  <!-- Pantalla inicial -->
+  <section id="inicio" class="screen active">
 
-<section id="hist" class="screen">
-<div class="hist-wrap">
-<div class="card"><div class="actions" style="margin-top:0"><button class="secondary" onclick="inicio()">← Inicio</button><button class="secondary" onclick="exportar()">Exportar CSV</button><button class="danger" onclick="borrar()">Borrar</button></div></div>
-<div class="card"><input id="buscarHist" style="width:100%;padding:12px;border:1px solid #c7ccd4;border-radius:10px" placeholder="Buscar..." oninput="renderHist()"></div>
-<div class="hist-table" id="tabla"></div>
-</div>
-</section>
-</main>
-<div id="toast"></div>
-<script>
-const PUNTOS=[{"ID": 1, "Área": "AIRE DE SELLO", "Equipo": "M 4502", "TAG": "PI 45775", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 8.0, "Máximo": 15.0, "TipoRango": "rango", "Orden": 1}, {"ID": 2, "Área": "AIRE DE SELLO", "Equipo": "M 4502", "TAG": "PI 45771", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 8.0, "Máximo": 15.0, "TipoRango": "rango", "Orden": 2}, {"ID": 3, "Área": "AIRE DE SELLO", "Equipo": "M 4502", "TAG": "PI 45761", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 8.0, "Máximo": 15.0, "TipoRango": "rango", "Orden": 3}, {"ID": 4, "Área": "AIRE DE SELLO", "Equipo": "K 4501", "TAG": "PI 45763", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 8.0, "Máximo": 15.0, "TipoRango": "rango", "Orden": 4}, {"ID": 5, "Área": "AIRE DE SELLO", "Equipo": "K 4501", "TAG": "PI 45762", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 8.0, "Máximo": 15.0, "TipoRango": "rango", "Orden": 5}, {"ID": 6, "Área": "AIRE DE SELLO", "Equipo": "K 4501-Z01", "TAG": "PI 45782", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 8.0, "Máximo": 15.0, "TipoRango": "rango", "Orden": 6}, {"ID": 7, "Área": "AIRE DE SELLO", "Equipo": "K 4501-Z01", "TAG": "PI 45781", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 8.0, "Máximo": 15.0, "TipoRango": "rango", "Orden": 7}, {"ID": 8, "Área": "AIRE DE SELLO", "Equipo": "K 4502", "TAG": "PI 45751", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 8.0, "Máximo": 15.0, "TipoRango": "rango", "Orden": 8}, {"ID": 9, "Área": "AIRE DE SELLO", "Equipo": "M 4501", "TAG": "PI 45741", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 8.0, "Máximo": 15.0, "TipoRango": "rango", "Orden": 9}, {"ID": 10, "Área": "AIRE DE SELLO", "Equipo": "M 4501", "TAG": "PI 45746", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 8.0, "Máximo": 15.0, "TipoRango": "rango", "Orden": 10}, {"ID": 11, "Área": "AIRE DE SELLO", "Equipo": "G 4501-Z01", "TAG": "PI 45727", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 8.0, "Máximo": 15.0, "TipoRango": "rango", "Orden": 11}, {"ID": 12, "Área": "AIRE DE SELLO", "Equipo": "G 4501-Z01", "TAG": "PI 45728", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 8.0, "Máximo": 15.0, "TipoRango": "rango", "Orden": 12}, {"ID": 13, "Área": "AIRE DE SELLO", "Equipo": "M 4502", "TAG": "PI 45773", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 0.1, "Máximo": 0.2, "TipoRango": "rango", "Orden": 13}, {"ID": 14, "Área": "AIRE DE SELLO", "Equipo": "M 4502", "TAG": "PI 45774", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 0.5, "Máximo": 1.0, "TipoRango": "rango", "Orden": 14}, {"ID": 15, "Área": "AIRE DE SELLO", "Equipo": "M 4502", "TAG": "PI 45772", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 0.1, "Máximo": 0.2, "TipoRango": "rango", "Orden": 15}, {"ID": 16, "Área": "AIRE DE SELLO", "Equipo": "K 4502", "TAG": "PDIT 45750", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": 250.0, "Máximo": 350.0, "TipoRango": "rango", "Orden": 16}, {"ID": 17, "Área": "AIRE DE SELLO", "Equipo": "K 4502", "TAG": "PI 45749A", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 2.5, "Máximo": 4.0, "TipoRango": "rango", "Orden": 17}, {"ID": 18, "Área": "AIRE DE SELLO", "Equipo": "K 4502", "TAG": "PI 45752", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 2.5, "Máximo": 4.0, "TipoRango": "rango", "Orden": 18}, {"ID": 19, "Área": "AGUA FRIA", "Equipo": "P 4510 A", "TAG": "PI 45007A", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 6.0, "Máximo": 7.0, "TipoRango": "rango", "Orden": 19}, {"ID": 20, "Área": "AGUA FRIA", "Equipo": "P 4510 B", "TAG": "PI 45007B", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 6.0, "Máximo": 7.0, "TipoRango": "rango", "Orden": 20}, {"ID": 21, "Área": "AGUA FRIA", "Equipo": "P 4510 A", "TAG": "Amperaje", "Parámetro": "Amperaje", "Unidad": "Amp", "RangoTexto": NaN, "Mínimo": 60.0, "Máximo": 80.0, "TipoRango": "rango", "Orden": 21}, {"ID": 22, "Área": "AGUA FRIA", "Equipo": "P 4510 B", "TAG": "Amperaje", "Parámetro": "Amperaje", "Unidad": "Amp", "RangoTexto": NaN, "Mínimo": 60.0, "Máximo": 80.0, "TipoRango": "rango", "Orden": 22}, {"ID": 23, "Área": "COOLING WATER", "Equipo": "E 4510", "TAG": "TI 45036", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 40.0, "Máximo": 55.0, "TipoRango": "rango", "Orden": 23}, {"ID": 24, "Área": "COOLING WATER", "Equipo": "E 4513", "TAG": "TI 45042", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 25.0, "Máximo": 40.0, "TipoRango": "rango", "Orden": 24}, {"ID": 25, "Área": "COOLING WATER", "Equipo": "Entrada a Planta", "TAG": "PI 45080", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 3.0, "Máximo": 4.0, "TipoRango": "rango", "Orden": 25}, {"ID": 26, "Área": "K4501", "Equipo": "F 4505", "TAG": "PDI 45694", "Parámetro": "Presión diferencial", "Unidad": "mbar", "RangoTexto": NaN, "Mínimo": NaN, "Máximo": 4.5, "TipoRango": "máximo", "Orden": 26}, {"ID": 27, "Área": "K4501", "Equipo": "F 4505", "TAG": "PDI 45696", "Parámetro": "Presión diferencial", "Unidad": "mbar", "RangoTexto": NaN, "Mínimo": NaN, "Máximo": 4.5, "TipoRango": "máximo", "Orden": 27}, {"ID": 28, "Área": "K4501", "Equipo": "F 4505", "TAG": "PDI 45695", "Parámetro": "Presión diferencial", "Unidad": "mbar", "RangoTexto": NaN, "Mínimo": NaN, "Máximo": 9.0, "TipoRango": "máximo", "Orden": 28}, {"ID": 29, "Área": "AMONÍACO", "Equipo": "E 4501", "TAG": "LI 45003B", "Parámetro": "Nivel", "Unidad": "cm", "RangoTexto": NaN, "Mínimo": 0.0, "Máximo": 40.0, "TipoRango": "rango", "Orden": 29}, {"ID": 30, "Área": "AMONÍACO", "Equipo": "E 4501", "TAG": "PI 45004", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 3.9, "Máximo": 4.5, "TipoRango": "rango", "Orden": 30}, {"ID": 31, "Área": "AMONÍACO", "Equipo": "E 4501", "TAG": "TI 45003", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 8.0, "Máximo": 12.0, "TipoRango": "rango", "Orden": 31}, {"ID": 32, "Área": "AMONÍACO", "Equipo": "E 4503", "TAG": "LI 45001", "Parámetro": "Nivel", "Unidad": "cm", "RangoTexto": NaN, "Mínimo": 70.0, "Máximo": 90.0, "TipoRango": "rango", "Orden": 32}, {"ID": 33, "Área": "AMONÍACO", "Equipo": "F 4506", "TAG": "PDI 45008", "Parámetro": "Presión diferencial", "Unidad": "mbar", "RangoTexto": NaN, "Mínimo": NaN, "Máximo": 250.0, "TipoRango": "máximo", "Orden": 33}, {"ID": 34, "Área": "AMONÍACO", "Equipo": "F 4508A/B", "TAG": "PDI 45079", "Parámetro": "Presión diferencial", "Unidad": "mbar", "RangoTexto": NaN, "Mínimo": NaN, "Máximo": 1380.0, "TipoRango": "máximo", "Orden": 34}, {"ID": 35, "Área": "AMONÍACO", "Equipo": "F 4501 A/B", "TAG": "PDI 45003", "Parámetro": "Presión diferencial", "Unidad": "mbar", "RangoTexto": NaN, "Mínimo": NaN, "Máximo": 1280.0, "TipoRango": "máximo", "Orden": 35}, {"ID": 36, "Área": "AMONÍACO", "Equipo": "E 4502", "TAG": "LI 45021", "Parámetro": "Nivel", "Unidad": "cm", "RangoTexto": NaN, "Mínimo": 88.0, "Máximo": 112.0, "TipoRango": "rango", "Orden": 36}, {"ID": 37, "Área": "AMONÍACO", "Equipo": "E 4502", "TAG": "PI 45038", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 9.0, "Máximo": 11.0, "TipoRango": "rango", "Orden": 37}, {"ID": 38, "Área": "AMONÍACO", "Equipo": "E 4502", "TAG": "TI 45073", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 12.0, "Máximo": 35.0, "TipoRango": "rango", "Orden": 38}, {"ID": 39, "Área": "AMONÍACO", "Equipo": "E 4521", "TAG": "TI 45006", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 95.0, "Máximo": 100.0, "TipoRango": "rango", "Orden": 39}, {"ID": 40, "Área": "AGUA DE CALDERAS", "Equipo": "P 4508 A", "TAG": "PI 45045", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 0.2, "Máximo": 2.0, "TipoRango": "rango", "Orden": 40}, {"ID": 41, "Área": "AGUA DE CALDERAS", "Equipo": "P 4508 B", "TAG": "PI 45045", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 0.2, "Máximo": 2.0, "TipoRango": "rango", "Orden": 41}, {"ID": 42, "Área": "AGUA DE CALDERAS", "Equipo": "D 4508", "TAG": "LG 45025", "Parámetro": "Nivel", "Unidad": "cm", "RangoTexto": NaN, "Mínimo": 0.0, "Máximo": 50.0, "TipoRango": "rango", "Orden": 42}, {"ID": 43, "Área": "AGUA DE CALDERAS", "Equipo": "P 4509 A", "TAG": "PI 45024", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 20.0, "Máximo": 30.0, "TipoRango": "rango", "Orden": 43}, {"ID": 44, "Área": "AGUA DE CALDERAS", "Equipo": "P 4509 B", "TAG": "PI 45025", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 20.0, "Máximo": 30.0, "TipoRango": "rango", "Orden": 44}, {"ID": 45, "Área": "AGUA DE CALDERAS", "Equipo": "D 4509", "TAG": "LG 45040", "Parámetro": "Nivel", "Unidad": "cm", "RangoTexto": NaN, "Mínimo": 0.0, "Máximo": 50.0, "TipoRango": "rango", "Orden": 45}, {"ID": 46, "Área": "AGUA DE CALDERAS", "Equipo": "PI-45072", "TAG": "Succión P-4505 A", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 28.5, "Máximo": 31.0, "TipoRango": "rango", "Orden": 46}, {"ID": 47, "Área": "AGUA DE CALDERAS", "Equipo": "PI-45019", "TAG": "Descarga P-4505 A", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 32.5, "Máximo": 34.0, "TipoRango": "rango", "Orden": 47}, {"ID": 48, "Área": "AGUA DE CALDERAS", "Equipo": "P 4505 A", "TAG": "Amperaje", "Parámetro": "Amperaje", "Unidad": "A", "RangoTexto": NaN, "Mínimo": 100.0, "Máximo": 115.0, "TipoRango": "rango", "Orden": 48}, {"ID": 49, "Área": "AGUA DE CALDERAS", "Equipo": "PI-45073", "TAG": "Succión P-4505 B", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 28.5, "Máximo": 31.0, "TipoRango": "rango", "Orden": 49}, {"ID": 50, "Área": "AGUA DE CALDERAS", "Equipo": "PI-45022", "TAG": "Descarga P-4505 B", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 32.5, "Máximo": 35.0, "TipoRango": "rango", "Orden": 50}, {"ID": 51, "Área": "AGUA DE CALDERAS", "Equipo": "P 4505 A", "TAG": "Amperaje", "Parámetro": "Amperaje", "Unidad": "A", "RangoTexto": NaN, "Mínimo": 100.0, "Máximo": 115.0, "TipoRango": "rango", "Orden": 51}, {"ID": 52, "Área": "AGUA DE CALDERAS", "Equipo": "TI-45024", "TAG": "D-4505", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 335.0, "Máximo": 350.0, "TipoRango": "rango", "Orden": 52}, {"ID": 53, "Área": "AGUA DE CALDERAS", "Equipo": "P 4506 A", "TAG": "PI 45047", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 39.0, "Máximo": 43.0, "TipoRango": "rango", "Orden": 53}, {"ID": 54, "Área": "AGUA DE CALDERAS", "Equipo": "P 4506 B/C", "TAG": "PI 45048", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 39.0, "Máximo": 43.0, "TipoRango": "rango", "Orden": 54}, {"ID": 55, "Área": "AGUA DE CALDERAS", "Equipo": "P 4506 A", "TAG": "Amperaje", "Parámetro": "Amperaje", "Unidad": "Amp", "RangoTexto": NaN, "Mínimo": 150.0, "Máximo": 180.0, "TipoRango": "rango", "Orden": 55}, {"ID": 56, "Área": "AGUA DE CALDERAS", "Equipo": "P 4506 B/C", "TAG": "Amperaje", "Parámetro": "Amperaje", "Unidad": "Amp", "RangoTexto": NaN, "Mínimo": 150.0, "Máximo": 180.0, "TipoRango": "rango", "Orden": 56}, {"ID": 57, "Área": "AGUA DE CALDERAS", "Equipo": "D 4506", "TAG": "PI 45082", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 0.4, "Máximo": 0.6, "TipoRango": "rango", "Orden": 57}, {"ID": 58, "Área": "AGUA DE CALDERAS", "Equipo": "D 4506", "TAG": "LG 45026 B", "Parámetro": "Nivel", "Unidad": "%", "RangoTexto": NaN, "Mínimo": 40.0, "Máximo": 90.0, "TipoRango": "rango", "Orden": 58}, {"ID": 59, "Área": "AGUA DE CALDERAS", "Equipo": "P 4512 B", "TAG": "PI 45071", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 9.0, "Máximo": 12.0, "TipoRango": "rango", "Orden": 59}, {"ID": 60, "Área": "AGUA DE CALDERAS", "Equipo": "P 4512 C", "TAG": "PI 45080", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 9.0, "Máximo": 12.0, "TipoRango": "rango", "Orden": 60}, {"ID": 61, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "D 4519", "TAG": "LI 45874", "Parámetro": "Nivel", "Unidad": "%", "RangoTexto": NaN, "Mínimo": 30.0, "Máximo": NaN, "TipoRango": "mínimo", "Orden": 61}, {"ID": 62, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "D 4519", "TAG": "TI 45872", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 55.0, "Máximo": 65.0, "TipoRango": "rango", "Orden": 62}, {"ID": 63, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "K 4503", "TAG": "PI 45872", "Parámetro": "Presión", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": -10.0, "Máximo": -5.0, "TipoRango": "rango", "Orden": 63}, {"ID": 64, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "PDI PI 45871/45872", "TAG": "PDI", "Parámetro": "Presión diferencial", "Unidad": "mbarg", "RangoTexto": NaN, "Mínimo": NaN, "Máximo": 100.0, "TipoRango": "máximo", "Orden": 64}, {"ID": 65, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "P 4501 A", "TAG": "PI 45869", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 15.0, "Máximo": 19.0, "TipoRango": "rango", "Orden": 65}, {"ID": 66, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "P 4501 B", "TAG": "PI 45868", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 15.0, "Máximo": 19.0, "TipoRango": "rango", "Orden": 66}, {"ID": 67, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "E 4518", "TAG": "TI 45862", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 55.0, "Máximo": 65.0, "TipoRango": "rango", "Orden": 67}, {"ID": 68, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "F 4504 A/B", "TAG": "TI 45855", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 40.0, "Máximo": 46.0, "TipoRango": "rango", "Orden": 68}, {"ID": 69, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "Aceite lubricación", "TAG": "PI 45845", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 4.0, "Máximo": 4.6, "TipoRango": "rango", "Orden": 69}, {"ID": 70, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "Aceite Control", "TAG": "PI 45844", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 14.0, "Máximo": 17.0, "TipoRango": "rango", "Orden": 70}, {"ID": 71, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "D 4525", "TAG": "PI 45882", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 13.0, "Máximo": 17.0, "TipoRango": "rango", "Orden": 71}, {"ID": 72, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "M 4502", "TAG": "PI 45778", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 1.0, "Máximo": 2.0, "TipoRango": "rango", "Orden": 72}, {"ID": 73, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "M 4502", "TAG": "PI 45766", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 1.0, "Máximo": 2.0, "TipoRango": "rango", "Orden": 73}, {"ID": 74, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "K 4501", "TAG": "PI 45764", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 1.0, "Máximo": 2.0, "TipoRango": "rango", "Orden": 74}, {"ID": 75, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "K 4501-Z01", "TAG": "PI 45759", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 1.0, "Máximo": 2.0, "TipoRango": "rango", "Orden": 75}, {"ID": 76, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "K 4501-Z01", "TAG": "PI 45757", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 1.0, "Máximo": 2.0, "TipoRango": "rango", "Orden": 76}, {"ID": 77, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "K 4502", "TAG": "PI 45755", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 1.0, "Máximo": 2.0, "TipoRango": "rango", "Orden": 77}, {"ID": 78, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "K 4502", "TAG": "PI 45753", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 1.0, "Máximo": 2.0, "TipoRango": "rango", "Orden": 78}, {"ID": 79, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "M 4501", "TAG": "PI 45747", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 1.0, "Máximo": 2.0, "TipoRango": "rango", "Orden": 79}, {"ID": 80, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "M 4501", "TAG": "PI 45744", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 1.0, "Máximo": 2.0, "TipoRango": "rango", "Orden": 80}, {"ID": 81, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "M 4501", "TAG": "PI 45742", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 1.0, "Máximo": 2.0, "TipoRango": "rango", "Orden": 81}, {"ID": 82, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "G 4501-Z01", "TAG": "PI 45725", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 1.0, "Máximo": 2.0, "TipoRango": "rango", "Orden": 82}, {"ID": 83, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "G 4501-Z01", "TAG": "PI 45723", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 0.1, "Máximo": 2.0, "TipoRango": "rango", "Orden": 83}, {"ID": 84, "Área": "CIRCUITO DE LUBRICACIÓN", "Equipo": "G 4501-Z01", "TAG": "PI 45721", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 0.1, "Máximo": 2.0, "TipoRango": "rango", "Orden": 84}, {"ID": 85, "Área": "SISTEMA DE VAPOR D4511", "Equipo": "D 4511", "TAG": "TI 45027", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 30.0, "Máximo": 50.0, "TipoRango": "rango", "Orden": 85}, {"ID": 86, "Área": "SISTEMA DE VAPOR D4511", "Equipo": "D 4511", "TAG": "TI 45028", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 40.0, "Máximo": 60.0, "TipoRango": "rango", "Orden": 86}, {"ID": 87, "Área": "SISTEMA DE VAPOR D4511", "Equipo": "D 4511", "TAG": "LI 45011", "Parámetro": "Nivel", "Unidad": "cm", "RangoTexto": NaN, "Mínimo": 0.0, "Máximo": 110.0, "TipoRango": "rango", "Orden": 87}, {"ID": 88, "Área": "SISTEMA DE VAPOR D4511", "Equipo": "D 4511", "TAG": "PI 45028", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 0.2, "Máximo": 0.7, "TipoRango": "rango", "Orden": 88}, {"ID": 89, "Área": "SISTEMA DE VAPOR D4511", "Equipo": "D 4511", "TAG": "TI 45029", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 28.0, "Máximo": 35.0, "TipoRango": "rango", "Orden": 89}, {"ID": 90, "Área": "CONDENSADOR DE SUPERFICIE", "Equipo": "P 4516 A", "TAG": "PI 45828", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 4.0, "Máximo": 6.0, "TipoRango": "rango", "Orden": 90}, {"ID": 91, "Área": "CONDENSADOR DE SUPERFICIE", "Equipo": "P 4516 B", "TAG": "PI 45829", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 4.0, "Máximo": 6.0, "TipoRango": "rango", "Orden": 91}, {"ID": 92, "Área": "CONDENSADOR DE SUPERFICIE", "Equipo": "E 4516", "TAG": "LI 45817", "Parámetro": "Nivel", "Unidad": "%", "RangoTexto": NaN, "Mínimo": 30.0, "Máximo": 55.0, "TipoRango": "rango", "Orden": 92}, {"ID": 93, "Área": "CONDENSADOR DE SUPERFICIE", "Equipo": "Vapor a eyector", "TAG": "TI 45813", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 200.0, "Máximo": 350.0, "TipoRango": "rango", "Orden": 93}, {"ID": 94, "Área": "CONDENSADOR DE SUPERFICIE", "Equipo": "Eyector", "TAG": "PI 45814", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 23.0, "Máximo": 24.0, "TipoRango": "rango", "Orden": 94}, {"ID": 95, "Área": "CONDENSADOR DE SUPERFICIE", "Equipo": "E 4516", "TAG": "PI 45058", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 1.0, "Máximo": 2.0, "TipoRango": "rango", "Orden": 95}, {"ID": 96, "Área": "CONDENSADOR DE SUPERFICIE", "Equipo": "E 4516", "TAG": "PI 45059", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 0.5, "Máximo": 2.0, "TipoRango": "rango", "Orden": 96}, {"ID": 97, "Área": "CONDENSADOR DE SUPERFICIE", "Equipo": "E 4516", "TAG": "TI 45065", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 12.0, "Máximo": 25.0, "TipoRango": "rango", "Orden": 97}, {"ID": 98, "Área": "CONDENSADOR DE SUPERFICIE", "Equipo": "E 4516", "TAG": "TI 45066", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 18.0, "Máximo": 31.0, "TipoRango": "rango", "Orden": 98}, {"ID": 99, "Área": "SISTEMA DE VAPOR D 4505", "Equipo": "P 4505 A", "TAG": "PI 45072", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 24.0, "Máximo": 26.0, "TipoRango": "rango", "Orden": 99}, {"ID": 100, "Área": "SISTEMA DE VAPOR D 4505", "Equipo": "P 4505 B", "TAG": "PI 45073", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 24.0, "Máximo": 26.0, "TipoRango": "rango", "Orden": 100}, {"ID": 101, "Área": "SISTEMA DE VAPOR D 4505", "Equipo": "P 4505 A", "TAG": "PI 45019", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 28.0, "Máximo": 32.0, "TipoRango": "rango", "Orden": 101}, {"ID": 102, "Área": "SISTEMA DE VAPOR D 4505", "Equipo": "P 4505 B", "TAG": "PI 45022", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 28.0, "Máximo": 32.0, "TipoRango": "rango", "Orden": 102}, {"ID": 103, "Área": "SISTEMA DE VAPOR D 4505", "Equipo": "P 4505 A", "TAG": "FI 45017", "Parámetro": "Flujo", "Unidad": "m³/hr", "RangoTexto": NaN, "Mínimo": 0.5, "Máximo": 1.5, "TipoRango": "rango", "Orden": 103}, {"ID": 104, "Área": "SISTEMA DE VAPOR D 4505", "Equipo": "P 4505 B", "TAG": "FI 45019", "Parámetro": "Flujo", "Unidad": "m³/hr", "RangoTexto": NaN, "Mínimo": 0.5, "Máximo": 1.5, "TipoRango": "rango", "Orden": 104}, {"ID": 105, "Área": "SISTEMA DE VAPOR D 4505", "Equipo": "P 4505 A/B", "TAG": "PDI 45023", "Parámetro": "Presión diferencial", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 6.0, "Máximo": NaN, "TipoRango": "mínimo", "Orden": 105}, {"ID": 106, "Área": "SISTEMA DE VAPOR D 4505", "Equipo": "D 4505", "TAG": "PI 45027", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 24.0, "Máximo": 28.0, "TipoRango": "rango", "Orden": 106}, {"ID": 107, "Área": "SISTEMA DE VAPOR D 4505", "Equipo": "D 4505", "TAG": "TI 45024", "Parámetro": "Temperatura", "Unidad": "°C", "RangoTexto": NaN, "Mínimo": 220.0, "Máximo": 230.0, "TipoRango": "rango", "Orden": 107}, {"ID": 108, "Área": "SISTEMA DE VAPOR D 4505", "Equipo": "D 4505", "TAG": "LI 45008", "Parámetro": "Nivel", "Unidad": "%", "RangoTexto": NaN, "Mínimo": 45.0, "Máximo": 65.0, "TipoRango": "rango", "Orden": 108}, {"ID": 109, "Área": "ACEITE DE CONTROL", "Equipo": "P 4517 A", "TAG": "Amperaje", "Parámetro": "Amperaje", "Unidad": "Amp", "RangoTexto": NaN, "Mínimo": 3.0, "Máximo": 4.0, "TipoRango": "rango", "Orden": 109}, {"ID": 110, "Área": "ACEITE DE CONTROL", "Equipo": "P 4517 B", "TAG": "Amperaje", "Parámetro": "Amperaje", "Unidad": "Amp", "RangoTexto": NaN, "Mínimo": 3.0, "Máximo": 4.0, "TipoRango": "rango", "Orden": 110}, {"ID": 111, "Área": "ACEITE DE CONTROL", "Equipo": "Descarga común", "TAG": "PI 45649", "Parámetro": "Presión", "Unidad": "barg", "RangoTexto": NaN, "Mínimo": 145.0, "Máximo": 175.0, "TipoRango": "rango", "Orden": 111}];
-const SECCIONES=["AMONÍACO","AGUA DE CALDERAS","AIRE DE SELLO","AGUA FRIA","COOLING WATER","K4501","CIRCUITO DE LUBRICACIÓN","SISTEMA DE VAPOR D4511","CONDENSADOR DE SUPERFICIE","ACEITE DE CONTROL","SISTEMA DE VAPOR D 4505"];
-let ronda=[], indice=0, inicioSesion=null, purgaSesion='', filtroSesion='', autoTimer=null;
-
-function $(x){return document.getElementById(x)}
-function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-function now(){const d=new Date();return {d,fecha:d.toLocaleDateString('es-CL'),hora:d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}),turno:d.getHours()>=8&&d.getHours()<20?'Día':'Noche'}}
-function actualizarInicio(){const n=now();$('fecha').textContent=n.fecha;$('hora').textContent=n.hora;$('turno').textContent=n.turno}
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');window.scrollTo(0,0)}
-function inicio(){show('inicio');actualizarInicio()}
-function iniciar(){
-  const n=now(); purgaSesion=$('purga').value===''?'':Number($('purga').value); filtroSesion=$('filtro').value===''?'':Number($('filtro').value);
-  ronda=PUNTOS.map(p=>({...p,lectura:''})); indice=0; inicioSesion=n;
-  $('contexto').textContent=`${n.fecha} · ${n.hora} · Turno ${n.turno}`;
-  show('ronda'); renderElemento(); progreso(); setTimeout(focusInput,120);
-}
-function estado(p){
-  if(p.lectura===''||p.lectura==null||Number.isNaN(Number(p.lectura)))return 'PENDIENTE';
-  if(p.Mínimo==null||p.Máximo==null)return 'REGISTRADO';
-  return Number(p.lectura)>=Number(p.Mínimo)&&Number(p.lectura)<=Number(p.Máximo)?'NORMAL':'FUERA DE RANGO';
-}
-function rangoTexto(p){
-  if(p.Mínimo!=null&&p.Máximo!=null)return `Rango: ${p.Mínimo} – ${p.Máximo} ${p.Unidad}`;
-  if(p.Mínimo!=null)return `Mínimo: ${p.Mínimo} ${p.Unidad}`;
-  if(p.Máximo!=null)return `Máximo: ${p.Máximo} ${p.Unidad}`;
-  return '';
-}
-function ultimoRegistroElemento(p){
-  const h=JSON.parse(localStorage.getItem('ronda_operacional_registros')||'[]');
-  for(let i=h.length-1;i>=0;i--){
-    if(String(h[i].PuntoID)===String(p.ID)) return h[i].Valor;
-  }
-  return '';
-}
-
-function renderElemento(){
-  if(!ronda.length)return;
-  const p=ronda[indice], st=estado(p), cls=st==='NORMAL'?'normal':st==='FUERA DE RANGO'?'out':'pending';
-  $('slide').innerHTML=`<div class="measure-card">
-    <div class="section-badge">${esc(p.Área)}</div>
-    <div class="tag">${esc(p.TAG)}</div>
-    <div class="equip"><b>Equipo:</b> ${esc(p.Equipo)}</div>
-    <div class="param"><b>Parámetro:</b> ${esc(p.Parámetro)} · <b>Unidad:</b> ${esc(p.Unidad)}</div>
-    ${rangoTexto(p)?`<div class="range">${esc(rangoTexto(p))}</div>`:''}
-    <div class="measure-input">
-      <label for="lectura">Valor de medición</label>
-      <div class="previous-value">Último registro: <b>${esc(ultimoRegistroElemento(p) || '—')}</b></div>
-      <input id="lectura" type="number" step="any" inputmode="decimal" pattern="[0-9]*" enterkeyhint="next" autocomplete="off" autocorrect="off" value="${esc(p.lectura)}" placeholder="Ingresar valor"
-             onkeydown="tecla(event)" onchange="guardarYAvanzar(this.value)" oninput="actualizarEstadoEnVivo(this.value)">
-      <div id="estadoActual" class="state ${cls}">${st}</div>
+    <div class="header">
+      <h1>Toma de datos de terreno A-45</h1>
+      <div id="fechaHora"></div>
     </div>
-    <div class="nav-hint">Desliza ← o → para cambiar de elemento sin registrar un valor.</div>
-    <div class="nav-buttons"><button class="secondary" onclick="anterior()">← Anterior</button><button class="primary" onclick="siguiente()">Siguiente →</button></div>
-  </div>`;
-  $('slide').scrollTop=0;
-  progreso();
-}
-function actualizarEstadoEnVivo(v){
-  const p=ronda[indice], old=p.lectura; p.lectura=v===''?'':Number(v);
-  const st=estado(p), el=$('estadoActual'); if(el){el.textContent=st;el.className='state '+(st==='NORMAL'?'normal':st==='FUERA DE RANGO'?'out':'pending')}
-  p.lectura=old;
-}
-function guardarYAvanzar(v){
-  const p=ronda[indice]; p.lectura=v===''?'':Number(v); progreso();
-  if(v!=='' && indice<ronda.length-1){clearTimeout(autoTimer);autoTimer=setTimeout(()=>{indice++;renderElemento();focusInput()},180)}
-}
-function tecla(e){if(e.key==='Enter'){e.preventDefault();guardarYAvanzar(e.target.value)}}
-function focusInput(){const el=$('lectura');if(el){el.focus();el.select()}}
-function siguiente(){if(indice<ronda.length-1){indice++;renderElemento();focusInput()}else{toast('Último elemento de la ronda')}} 
-function anterior(){if(indice>0){indice--;renderElemento();focusInput()}else{toast('Primer elemento de la ronda')}}
-function progreso(){
-  const total=ronda.length, completos=ronda.filter(p=>estado(p)!=='PENDIENTE').length, fuera=ronda.filter(p=>estado(p)==='FUERA DE RANGO').length;
-  $('progreso').textContent=`Elemento ${indice+1} de ${total} · ${completos} registrados · ${fuera} fuera de rango`;
-  $('bar').style.width=(total?completos/total*100:0)+'%';
-}
-function finalizar(){
-  const n=now(), completos=ronda.filter(p=>estado(p)!=='PENDIENTE');
-  if(!completos.length){alert('No hay mediciones ingresadas en esta sesión.');return}
-  const hist=JSON.parse(localStorage.getItem('ronda_operacional_registros')||'[]');
-  const registros=completos.map(p=>({ID:crypto.randomUUID?crypto.randomUUID():String(Date.now()+p.ID),Fecha:n.fecha,Hora:n.hora,Turno:n.turno,Purga:purgaSesion,Filtro:filtroSesion,PuntoID:p.ID,Área:p.Área,Equipo:p.Equipo,TAG:p.TAG,Parámetro:p.Parámetro,Unidad:p.Unidad,Valor:p.lectura,Estado:estado(p)}));
-  localStorage.setItem('ronda_operacional_registros',JSON.stringify(hist.concat(registros)));
-  alert(`Sesión finalizada. Se guardaron ${registros.length} mediciones.`);
-  inicio();
-}
-function historial(){show('hist');renderHist()}
-function renderHist(){
-  const q=$('buscarHist').value.toLowerCase().trim();
-  let h=JSON.parse(localStorage.getItem('ronda_operacional_registros')||'[]').reverse();
-  h=h.filter(r=>!q||Object.values(r).some(v=>String(v??'').toLowerCase().includes(q)));
-  if(!h.length){$('tabla').innerHTML='<div style="padding:25px;text-align:center;color:#697386">No hay registros.</div>';return}
-  const c=['Fecha','Hora','Turno','Purga','Filtro','Área','Equipo','TAG','Parámetro','Valor','Unidad','Estado'];
-  $('tabla').innerHTML='<table><thead><tr>'+c.map(x=>`<th>${x}</th>`).join('')+'</tr></thead><tbody>'+
-  h.map(r=>'<tr>'+c.map(x=>`<td>${esc(r[x])}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
-}
-function borrar(){if(confirm('¿Borrar todo el historial de este navegador?')){localStorage.removeItem('ronda_operacional_registros');renderHist()}}
-function exportar(){
-  const h=JSON.parse(localStorage.getItem('ronda_operacional_registros')||'[]');
-  if(!h.length){alert('No hay registros para exportar.');return}
-  const c=['ID','Fecha','Hora','Turno','Purga','Filtro','PuntoID','Área','Equipo','TAG','Parámetro','Unidad','Valor','Estado'];
-  const csv=[c,...h.map(r=>c.map(x=>r[x]??''))].map(a=>a.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\\n');
-  const b=new Blob(['\\ufeff'+csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='Toma_de_datos_A45_Registros.csv';a.click();URL.revokeObjectURL(a.href);
-}
-function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1400)}
 
-let touchStartX=0,touchStartY=0,touchStartTime=0;
-$('swipeArea').addEventListener('touchstart',e=>{const t=e.changedTouches[0];touchStartX=t.clientX;touchStartY=t.clientY;touchStartTime=Date.now()},{passive:true});
-$('swipeArea').addEventListener('touchend',e=>{
-  const t=e.changedTouches[0],dx=t.clientX-touchStartX,dy=t.clientY-touchStartY,dt=Date.now()-touchStartTime;
-  if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.25&&dt<700){if(dx<0)siguiente();else anterior()}
-},{passive:true});
-actualizarInicio();setInterval(actualizarInicio,30000);
-</script>
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js");
-}
-</script>
-</body></html>
+    <div class="start-card">
+
+      <div class="field">
+        <label>Purga (%)</label>
+        <div class="last-value" id="purgaAnterior">Último: —</div>
+        <input id="purga" type="text" inputmode="decimal" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label>Filtro (mbar)</label>
+        <div class="last-value" id="filtroAnterior">Último: —</div>
+        <input id="filtro" type="text" inputmode="decimal" autocomplete="off">
+      </div>
+
+      <button id="btnIniciar" class="primary">Iniciar</button>
+
+    </div>
+
+  </section>
+
+  <!-- Pantalla de medición -->
+  <section id="ronda" class="screen">
+
+    <div class="top-fixed">
+
+      <div class="section-name" id="seccion"></div>
+
+      <div class="tag-row">
+        <div id="tag" class="tag"></div>
+        <div id="equipo" class="equipo"></div>
+      </div>
+
+      <div id="parametro" class="parametro"></div>
+
+      <div id="rango" class="rango"></div>
+
+      <div id="ultimo" class="ultimo"></div>
+
+      <div class="progress-row">
+        <span id="contador"></span>
+      </div>
+
+    </div>
+
+    <div class="input-area">
+
+      <div id="valorActual" class="valor-actual"></div>
+
+      <!-- Teclado numérico propio -->
+      <div id="teclado" class="teclado">
+
+        <button data-key="7">7</button>
+        <button data-key="8">8</button>
+        <button data-key="9">9</button>
+
+        <button data-key="4">4</button>
+        <button data-key="5">5</button>
+        <button data-key="6">6</button>
+
+        <button data-key="1">1</button>
+        <button data-key="2">2</button>
+        <button data-key="3">3</button>
+
+        <button data-key="0">0</button>
+        <button id="backspace">⌫</button>
+        <button data-key=",">,</button>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  <script src="app.js"></script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+
+</body>
+</html>
