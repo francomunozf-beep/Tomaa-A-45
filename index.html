@@ -1,104 +1,109 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <title>Toma de datos de terreno A-45</title>
 
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#742774" />
 
-  <meta name="theme-color" content="#742774">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Toma A-45" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
 
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Toma A-45">
-
-  <link rel="apple-touch-icon" href="icon-192.png">
-
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
 
   <!-- Pantalla inicial -->
   <section id="inicio" class="screen active">
-
-    <div class="header">
+    <header class="header">
       <h1>Toma de datos de terreno A-45</h1>
-      <div id="fechaHora"></div>
-    </div>
+      <div id="fechaHora" class="fecha-hora"></div>
+    </header>
 
-    <div class="start-card">
+    <main class="start-card">
 
       <div class="field">
         <label>Purga (%)</label>
-        <div class="last-value" id="purgaAnterior">Último: —</div>
-        <input id="purga" type="text" inputmode="decimal" autocomplete="off">
+        <div id="purgaAnterior" class="last-value">Último: —</div>
+        <input id="purga" type="text" inputmode="decimal" autocomplete="off" />
       </div>
 
       <div class="field">
         <label>Filtro (mbar)</label>
-        <div class="last-value" id="filtroAnterior">Último: —</div>
-        <input id="filtro" type="text" inputmode="decimal" autocomplete="off">
+        <div id="filtroAnterior" class="last-value">Último: —</div>
+        <input id="filtro" type="text" inputmode="decimal" autocomplete="off" />
       </div>
 
-      <button id="btnIniciar" class="primary">Iniciar</button>
+      <button id="btnIniciar" class="primary large">Iniciar</button>
 
-    </div>
-
+    </main>
   </section>
 
-  <!-- Pantalla de medición -->
+  <!-- Pantalla de ronda -->
   <section id="ronda" class="screen">
 
-    <div class="top-fixed">
+    <header class="top-fixed">
 
-      <div class="section-name" id="seccion"></div>
+      <div class="top-row">
+        <div id="contador" class="contador">1 / 111</div>
+        <button id="btnFinalizar" class="ghost danger">Finalizar sesión</button>
+      </div>
+
+      <div id="seccion" class="section-name">AMONÍACO</div>
 
       <div class="tag-row">
-        <div id="tag" class="tag"></div>
-        <div id="equipo" class="equipo"></div>
+        <div id="tag" class="tag">PI 45004</div>
+        <div id="equipo" class="equipo">E4501</div>
       </div>
 
-      <div id="parametro" class="parametro"></div>
+      <div id="parametro" class="parametro">Presión · barg</div>
 
-      <div id="rango" class="rango"></div>
+      <div id="rango" class="subtle">Rango 3.9 - 4.5 barg</div>
 
-      <div id="ultimo" class="ultimo"></div>
+      <div id="ultimo" class="subtle">Último: 4.2</div>
 
-      <div class="progress-row">
-        <span id="contador"></span>
-      </div>
+    </header>
 
-    </div>
-
-    <div class="input-area">
+    <main class="input-area">
 
       <div id="valorActual" class="valor-actual"></div>
 
-      <!-- Teclado numérico propio -->
-      <div id="teclado" class="teclado">
+      <div class="keyboard-card">
 
-        <button data-key="7">7</button>
-        <button data-key="8">8</button>
-        <button data-key="9">9</button>
+        <div id="teclado" class="teclado">
 
-        <button data-key="4">4</button>
-        <button data-key="5">5</button>
-        <button data-key="6">6</button>
+          <button data-key="7">7</button>
+          <button data-key="8">8</button>
+          <button data-key="9">9</button>
 
-        <button data-key="1">1</button>
-        <button data-key="2">2</button>
-        <button data-key="3">3</button>
+          <button data-key="4">4</button>
+          <button data-key="5">5</button>
+          <button data-key="6">6</button>
 
-        <button data-key="0">0</button>
-        <button id="backspace">⌫</button>
-        <button data-key=",">,</button>
+          <button data-key="1">1</button>
+          <button data-key="2">2</button>
+          <button data-key="3">3</button>
+
+          <button data-key="0">0</button>
+          <button id="backspace">⌫</button>
+          <button data-key=",">,</button>
+
+        </div>
+
+        <button id="btnAceptar" class="primary large">Aceptar</button>
 
       </div>
 
-    </div>
+      <div class="nav-buttons">
+        <button id="btnAnterior" class="secondary">← Anterior</button>
+        <button id="btnSiguiente" class="secondary">Siguiente →</button>
+      </div>
+
+    </main>
 
   </section>
 
