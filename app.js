@@ -1027,13 +1027,16 @@ async function guardarActual(){
 
 }
 
-// -----------------------------------------------------
-// INICIAR RONDA
-// -----------------------------------------------------
+// =====================================================
+// INICIO DE LA RONDA
+// =====================================================
 
-async function iniciarRonda(){
+function iniciarRonda(){
 
   prepararRonda();
+
+  indice = 0;
+  buffer = '';
 
   if($('inicio'))
     $('inicio').classList.remove('active');
@@ -1047,6 +1050,55 @@ async function iniciarRonda(){
   renderElemento();
 
 }
+
+// =====================================================
+// EVENTOS PRINCIPALES
+// =====================================================
+
+window.addEventListener('load', async () => {
+
+  await abrirDB();
+
+  ordenarPuntos();
+
+  actualizarFecha();
+
+  if($('btnIniciar')){
+    $('btnIniciar').addEventListener(
+      'click',
+      iniciarRonda
+    );
+  }
+
+  if($('btnVerHistorial')){
+    $('btnVerHistorial').addEventListener(
+      'click',
+      abrirHistorial
+    );
+  }
+
+  if($('btnNuevaRonda')){
+    $('btnNuevaRonda').addEventListener(
+      'click',
+      iniciarRonda
+    );
+  }
+
+  if($('btnVolverInicio')){
+    $('btnVolverInicio').addEventListener(
+      'click',
+      volverInicio
+    );
+  }
+
+  if($('btnFinalizar')){
+    $('btnFinalizar').addEventListener(
+      'click',
+      finalizarRonda
+    );
+  }
+
+});
 
 // -----------------------------------------------------
 // FINALIZAR RONDA
