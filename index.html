@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -18,92 +19,157 @@
 <body>
 
   <!-- Pantalla inicial -->
+
   <section id="inicio" class="screen active">
-    <header class="header">
-      <h1>Toma de datos de terreno A-45</h1>
-      <div id="fechaHora" class="fecha-hora"></div>
-    </header>
 
-    <main class="start-card">
+```
+<header class="header">
+  <h1>Toma de datos de terreno A-45</h1>
+  <div id="fechaHora" class="fecha-hora"></div>
+</header>
 
-      <div class="field">
-        <label>Purga (%)</label>
-        <div id="purgaAnterior" class="last-value">Último: —</div>
-        <input id="purga" type="text" inputmode="decimal" autocomplete="off" />
-      </div>
+<main class="start-card">
 
-      <div class="field">
-        <label>Filtro (mbar)</label>
-        <div id="filtroAnterior" class="last-value">Último: —</div>
-        <input id="filtro" type="text" inputmode="decimal" autocomplete="off" />
-      </div>
+  <button id="btnIniciar" class="primary large">
+    Iniciar
+  </button>
 
-      <button id="btnIniciar" class="primary large">Iniciar</button>
+  <button id="btnVerHistorial" class="secondary large">
+    Historial
+  </button>
 
-    </main>
+</main>
+```
+
   </section>
 
   <!-- Pantalla de ronda -->
+
   <section id="ronda" class="screen">
 
-    <header class="top-fixed">
+```
+<header class="top-fixed">
 
-      <div class="top-row">
-        <div id="contador" class="contador">1 / 111</div>
-        <button id="btnFinalizar" class="ghost danger">Finalizar sesión</button>
-      </div>
+  <div class="top-row">
 
-      <div id="seccion" class="section-name">AMONÍACO</div>
+    <div id="contador" class="contador">
+      1 / 30
+    </div>
 
-      <div class="tag-row">
-        <div id="tag" class="tag">PI 45004</div>
-        <div id="equipo" class="equipo">E4501</div>
-      </div>
+    <button id="btnFinalizar" class="ghost danger">
+      Finalizar
+    </button>
 
-      <div id="parametro" class="parametro">Presión · barg</div>
+  </div>
 
-      <div id="rango" class="subtle">Rango 3.9 - 4.5 barg</div>
+  <div id="seccion" class="section-name">
+    AMONÍACO
+  </div>
 
-      <div id="ultimo" class="subtle">Último: 4.2</div>
+  <div class="tag-row">
 
-    </header>
+    <div id="tag" class="tag">
+      LI45001
+    </div>
 
-    <main class="input-area">
+    <div id="equipo" class="equipo">
+      TK4501
+    </div>
 
-      <div id="valorActual" class="valor-actual"></div>
+  </div>
 
-      <div class="keyboard-card">
+  <div id="parametro" class="parametro">
+    Nivel · %
+  </div>
 
-        <div id="teclado" class="teclado">
+  <div class="subtle-row">
 
-          <button data-key="7">7</button>
-          <button data-key="8">8</button>
-          <button data-key="9">9</button>
+    <div id="rango" class="subtle">
+      Rango 20 - 80 %
+    </div>
 
-          <button data-key="4">4</button>
-          <button data-key="5">5</button>
-          <button data-key="6">6</button>
+    <div id="ultimo" class="subtle">
+      Último: 55
+    </div>
 
-          <button data-key="1">1</button>
-          <button data-key="2">2</button>
-          <button data-key="3">3</button>
+  </div>
 
-          <button data-key="0">0</button>
-          <button id="backspace">⌫</button>
-          <button data-key=",">,</button>
+</header>
 
-        </div>
+<main class="input-area">
 
-        <button id="btnAceptar" class="primary large">Aceptar</button>
+  <div id="valorActual" class="valor-actual"></div>
 
-      </div>
+  <div class="keyboard-card">
 
-      <div class="nav-buttons">
-        <button id="btnAnterior" class="secondary">← Anterior</button>
-        <button id="btnSiguiente" class="secondary">Siguiente →</button>
-      </div>
+    <div id="teclado" class="teclado">
 
-    </main>
+      <button data-key="7">7</button>
+      <button data-key="8">8</button>
+      <button data-key="9">9</button>
+
+      <button data-key="4">4</button>
+      <button data-key="5">5</button>
+      <button data-key="6">6</button>
+
+      <button data-key="1">1</button>
+      <button data-key="2">2</button>
+      <button data-key="3">3</button>
+
+      <button data-key="0">0</button>
+      <button id="backspace">⌫</button>
+      <button data-key=",">,</button>
+
+    </div>
+
+    <button id="btnAceptar" class="primary large">
+      Aceptar
+    </button>
+
+  </div>
+
+  <div class="nav-buttons">
+
+    <button id="btnAnterior" class="secondary">
+      ← Anterior
+    </button>
+
+    <button id="btnSiguiente" class="secondary">
+      Siguiente →
+    </button>
+
+  </div>
+
+</main>
+```
+
+  </section>
+
+  <!-- Pantalla de historial -->
+
+  <section id="historial" class="screen">
+
+```
+<header class="header">
+
+  <h1>Historial</h1>
+
+</header>
+
+<main class="history-list">
+
+  <div id="listaHistorial"></div>
+
+  <button id="btnNuevaRonda" class="primary large">
+    Nueva toma de datos
+  </button>
+
+  <button id="btnVolverInicio" class="secondary large">
+    Volver
+  </button>
+
+</main>
+```
 
   </section>
 

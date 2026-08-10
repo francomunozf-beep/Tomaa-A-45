@@ -1,23 +1,23 @@
 // =====================================================
 // TOMA DE DATOS DE TERRENO A-45
-// app.js - PARTE 1
-// Base de la aplicación, IndexedDB, configuración,
-// Purga/Filtro persistentes y utilidades.
+// app.js - NUEVA VERSIÓN (Parte 1)
+// Optimizada para iPhone 14 Pro
 // =====================================================
 
-// Orden exacto solicitado por el usuario
+// -----------------------------------------------------
+// ORDEN FIJO DE SECCIONES
+// -----------------------------------------------------
+
 const SECCIONES = [
-  'AMONÍACO',
+  'AMONIACO',
   'AGUA DE CALDERAS',
   'AIRE DE SELLO',
   'AGUA FRIA',
   'COOLING WATER',
-  'COMPRESOR K4501',
-  'CIRCUITO DE LUBRICACIÓN',
   'SISTEMA DE VAPOR D4511',
   'CONDENSADOR DE SUPERFICIE',
-  'SISTEMA DE VAPOR D4505',
-  'ACEITE DE CONTROL'
+  'ACEITE DE CONTROL',
+  'PURGA'
 ];
 
 // -----------------------------------------------------
@@ -25,7 +25,7 @@ const SECCIONES = [
 // -----------------------------------------------------
 
 const DB_NAME = 'A45_DB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let db = null;
 
@@ -37,6 +37,7 @@ let PUNTOS = [];
 let ronda = [];
 let indice = 0;
 let buffer = '';
+let sesionActual = null;
 
 // -----------------------------------------------------
 // UTILIDADES
@@ -50,25 +51,34 @@ function ahoraISO(){
   return new Date().toISOString();
 }
 
-function formatearFecha(d){
-  return d.toLocaleDateString('es-CL') + ' · ' +
-         d.toLocaleTimeString('es-CL',{
-           hour:'2-digit',
-           minute:'2-digit'
-         });
+function fechaChile(){
+
+  const d = new Date();
+
+  return d.toLocaleDateString('es-CL');
+
 }
 
-// -----------------------------------------------------
-// RELOJ EN PANTALLA
-// -----------------------------------------------------
+function horaChile(){
+
+  const d = new Date();
+
+  return d.toLocaleTimeString(
+    'es-CL',
+    {
+      hour:'2-digit',
+      minute:'2-digit'
+    }
+  );
+
+}
 
 function actualizarFecha(){
 
-  const el = $('fechaHora');
+  if(!$('fechaHora')) return;
 
-  if(!el) return;
-
-  el.textContent = formatearFecha(new Date());
+  $('fechaHora').textContent =
+    fechaChile() + ' · ' + horaChile();
 
 }
 
@@ -83,35 +93,27 @@ function abrirDB(){
 
   return new Promise((resolve,reject)=>{
 
-    const req = indexedDB.open(DB_NAME,DB_VERSION);
+    const req =
+      indexedDB.open(DB_NAME,DB_VERSION);
 
     req.onupgradeneeded = e=>{
 
       const database = e.target.result;
 
-      if(!database.objectStoreNames.contains('registros')){
+      if(
+        !database.objectStoreNames.contains('sesiones')
+      ){
 
-        const s = database.createObjectStore(
-          'registros',
-          {
-            keyPath:'id',
-            autoIncrement:true
-          }
-        );
+        const s =
+          database.createObjectStore(
+            'sesiones',
+            {
+              keyPath:'id',
+              autoIncrement:true
+            }
+          );
 
-        s.createIndex('PuntoID','PuntoID');
-        s.createIndex('Fecha','Fecha');
-
-      }
-
-      if(!database.objectStoreNames.contains('config')){
-
-        database.createObjectStore(
-          'config',
-          {
-            keyPath:'key'
-          }
-        );
+        s.createIndex('fecha','fecha');
 
       }
 
@@ -120,6 +122,7 @@ function abrirDB(){
     req.onsuccess = e=>{
 
       db = e.target.result;
+
       resolve();
 
     };
@@ -131,19 +134,17 @@ function abrirDB(){
 }
 
 // -----------------------------------------------------
-// CONFIGURACIÓN
+// HISTORIAL
 // -----------------------------------------------------
 
-function guardarConfig(key,value){
+function guardarSesion(){
 
   return new Promise((resolve,reject)=>{
 
-    const tx = db.transaction('config','readwrite');
+    const tx =
+      db.transaction('sesiones','readwrite');
 
-    tx.objectStore('config').put({
-      key,
-      value
-    });
+    tx.objectStore('sesiones').add(sesionActual);
 
     tx.oncomplete = ()=> resolve();
 
@@ -153,505 +154,1089 @@ function guardarConfig(key,value){
 
 }
 
-function leerConfig(key){
+function leerSesiones(){
 
   return new Promise(resolve=>{
 
-    const tx = db.transaction('config','readonly');
+    const tx =
+      db.transaction('sesiones','readonly');
 
-    const req = tx.objectStore('config').get(key);
-
-    req.onsuccess = ()=>{
-
-      resolve(
-        req.result ? req.result.value : ''
-      );
-
-    };
-
-    req.onerror = ()=> resolve('');
-
-  });
-
-}
-
-// -----------------------------------------------------
-// REGISTROS
-// -----------------------------------------------------
-
-function guardarRegistro(reg){
-
-  return new Promise((resolve,reject)=>{
-
-    const tx = db.transaction(
-      'registros',
-      'readwrite'
-    );
-
-    tx.objectStore('registros').add(reg);
-
-    tx.oncomplete = ()=> resolve();
-
-    tx.onerror = e=> reject(e);
-
-  });
-
-}
-
-function ultimoRegistro(id){
-
-  return new Promise(resolve=>{
-
-    const tx = db.transaction(
-      'registros',
-      'readonly'
-    );
-
-    const req = tx.objectStore('registros').getAll();
+    const req =
+      tx.objectStore('sesiones').getAll();
 
     req.onsuccess = ()=>{
 
-      const arr = req.result.filter(
-        x=> String(x.PuntoID)===String(id)
-      );
-
-      if(arr.length===0){
-
-        resolve('—');
-        return;
-
-      }
-
-      resolve(arr[arr.length-1].Valor);
+      resolve(req.result || []);
 
     };
 
-    req.onerror = ()=> resolve('—');
+    req.onerror = ()=> resolve([]);
 
   });
 
 }
 
 // -----------------------------------------------------
-// PURGA / FILTRO
+// RONDA
 // -----------------------------------------------------
 
-async function cargarPurgaFiltro(){
+function prepararRonda(){
 
-  const purga = await leerConfig('purga');
-  const filtro = await leerConfig('filtro');
+  ronda = PUNTOS.map(p=>({
 
-  if($('purgaAnterior'))
-    $('purgaAnterior').textContent =
-      'Último: ' + (purga || '—');
+    ...p,
 
-  if($('filtroAnterior'))
-    $('filtroAnterior').textContent =
-      'Último: ' + (filtro || '—');
+    lectura:''
+
+  }));
+
+  indice = 0;
+
+  buffer = '';
+
+  sesionActual = {
+
+    fecha: fechaChile(),
+
+    hora: horaChile(),
+
+    creado: ahoraISO(),
+
+    registros: []
+
+  };
 
 }
 
 // -----------------------------------------------------
-// INICIALIZACIÓN
+// LISTA DE INSTRUMENTOS (VERSIÓN REDUCIDA)
 // -----------------------------------------------------
 
-async function iniciarSistema(){
-
-  await abrirDB();
-
-  await cargarPurgaFiltro();
-
-}
-
-iniciarSistema();
-
-// =====================================================
 PUNTOS = [
-  { id:1, seccion:"AIRE DE SELLO", tag:"PI 45775", equipo:"M 4502", parametro:"Presión", unidad:"mbarg", minimo:8.0, maximo:15.0 },
-  { id:2, seccion:"AIRE DE SELLO", tag:"PI 45771", equipo:"M 4502", parametro:"Presión", unidad:"mbarg", minimo:8.0, maximo:15.0 },
-  { id:3, seccion:"AIRE DE SELLO", tag:"PI 45761", equipo:"M 4502", parametro:"Presión", unidad:"mbarg", minimo:8.0, maximo:15.0 },
-  { id:4, seccion:"AIRE DE SELLO", tag:"PI 45763", equipo:"K 4501", parametro:"Presión", unidad:"mbarg", minimo:8.0, maximo:15.0 },
-  { id:5, seccion:"AIRE DE SELLO", tag:"PI 45762", equipo:"K 4501", parametro:"Presión", unidad:"mbarg", minimo:8.0, maximo:15.0 },
-  { id:6, seccion:"AIRE DE SELLO", tag:"PI 45776", equipo:"K 4501", parametro:"Presión", unidad:"mbarg", minimo:8.0, maximo:15.0 },
-
-  { id:7, seccion:"AGUA FRIA", tag:"PI 45701", equipo:"E 4501", parametro:"Presión", unidad:"barg", minimo:2.0, maximo:4.0 },
-  { id:8, seccion:"AGUA FRIA", tag:"TI 45702", equipo:"E 4501", parametro:"Temperatura", unidad:"°C", minimo:5.0, maximo:12.0 },
-  { id:9, seccion:"AGUA FRIA", tag:"PI 45703", equipo:"E 4502", parametro:"Presión", unidad:"barg", minimo:2.0, maximo:4.0 },
-  { id:10, seccion:"AGUA FRIA", tag:"TI 45704", equipo:"E 4502", parametro:"Temperatura", unidad:"°C", minimo:5.0, maximo:12.0 },
-  { id:11, seccion:"AGUA FRIA", tag:"PI 45705", equipo:"E 4503", parametro:"Presión", unidad:"barg", minimo:2.0, maximo:4.0 },
-  { id:12, seccion:"AGUA FRIA", tag:"TI 45706", equipo:"E 4503", parametro:"Temperatura", unidad:"°C", minimo:5.0, maximo:12.0 },
-  { id:13, seccion:"AGUA FRIA", tag:"PI 45707", equipo:"E 4504", parametro:"Presión", unidad:"barg", minimo:2.0, maximo:4.0 },
-  { id:14, seccion:"AGUA FRIA", tag:"TI 45708", equipo:"E 4504", parametro:"Temperatura", unidad:"°C", minimo:5.0, maximo:12.0 },
-  { id:15, seccion:"AGUA FRIA", tag:"PI 45709", equipo:"E 4505", parametro:"Presión", unidad:"barg", minimo:2.0, maximo:4.0 },
-  { id:16, seccion:"AGUA FRIA", tag:"TI 45710", equipo:"E 4505", parametro:"Temperatura", unidad:"°C", minimo:5.0, maximo:12.0 },
-  { id:17, seccion:"AGUA FRIA", tag:"PI 45711", equipo:"E 4506", parametro:"Presión", unidad:"barg", minimo:2.0, maximo:4.0 },
-  { id:18, seccion:"AGUA FRIA", tag:"TI 45712", equipo:"E 4506", parametro:"Temperatura", unidad:"°C", minimo:5.0, maximo:12.0 },
-  { id:19, seccion:"AGUA FRIA", tag:"PI 45713", equipo:"E 4507", parametro:"Presión", unidad:"barg", minimo:2.0, maximo:4.0 },
-  { id:20, seccion:"AGUA FRIA", tag:"TI 45714", equipo:"E 4507", parametro:"Temperatura", unidad:"°C", minimo:5.0, maximo:12.0 },
-
-  { id:21, seccion:"COOLING WATER", tag:"PI 45801", equipo:"E 4510", parametro:"Presión", unidad:"barg", minimo:2.5, maximo:4.5 },
-  { id:22, seccion:"COOLING WATER", tag:"TI 45802", equipo:"E 4510", parametro:"Temperatura", unidad:"°C", minimo:18.0, maximo:32.0 },
-  { id:23, seccion:"COOLING WATER", tag:"PI 45803", equipo:"E 4511", parametro:"Presión", unidad:"barg", minimo:2.5, maximo:4.5 },
-  { id:24, seccion:"COOLING WATER", tag:"TI 45804", equipo:"E 4511", parametro:"Temperatura", unidad:"°C", minimo:18.0, maximo:32.0 },
-  { id:25, seccion:"COOLING WATER", tag:"PI 45805", equipo:"E 4512", parametro:"Presión", unidad:"barg", minimo:2.5, maximo:4.5 },
-  { id:26, seccion:"COOLING WATER", tag:"TI 45806", equipo:"E 4512", parametro:"Temperatura", unidad:"°C", minimo:18.0, maximo:32.0 },
-  { id:27, seccion:"COOLING WATER", tag:"PI 45807", equipo:"E 4513", parametro:"Presión", unidad:"barg", minimo:2.5, maximo:4.5 },
-  { id:28, seccion:"COOLING WATER", tag:"TI 45808", equipo:"E 4513", parametro:"Temperatura", unidad:"°C", minimo:18.0, maximo:32.0 },
-
-  { id:29, seccion:"COMPRESOR K4501", tag:"PI 45901", equipo:"K4501", parametro:"Presión de succión", unidad:"barg", minimo:1.0, maximo:3.0 },
-  { id:30, seccion:"COMPRESOR K4501", tag:"PI 45902", equipo:"K4501", parametro:"Presión de descarga", unidad:"barg", minimo:10.0, maximo:18.0 }
-,
-  { id:31, seccion:"COMPRESOR K4501", tag:"TI 45903", equipo:"K4501", parametro:"Temperatura de descarga", unidad:"°C", minimo:60.0, maximo:110.0 },
-  { id:32, seccion:"COMPRESOR K4501", tag:"VI 45904", equipo:"K4501", parametro:"Vibración radial", unidad:"mm/s", minimo:0.0, maximo:4.5 },
-  { id:33, seccion:"COMPRESOR K4501", tag:"VI 45905", equipo:"K4501", parametro:"Vibración axial", unidad:"mm/s", minimo:0.0, maximo:4.5 },
-  { id:34, seccion:"COMPRESOR K4501", tag:"TI 45906", equipo:"K4501", parametro:"Temperatura rodamiento NDE", unidad:"°C", minimo:35.0, maximo:85.0 },
-  { id:35, seccion:"COMPRESOR K4501", tag:"TI 45907", equipo:"K4501", parametro:"Temperatura rodamiento DE", unidad:"°C", minimo:35.0, maximo:85.0 },
 
   // =====================================================
-  // CIRCUITO DE LUBRICACIÓN
+  // AMONIACO
   // =====================================================
 
-  { id:36, seccion:"CIRCUITO DE LUBRICACIÓN", tag:"PI 46001", equipo:"P4601A", parametro:"Presión de aceite", unidad:"barg", minimo:2.0, maximo:4.0 },
-  { id:37, seccion:"CIRCUITO DE LUBRICACIÓN", tag:"TI 46002", equipo:"P4601A", parametro:"Temperatura de aceite", unidad:"°C", minimo:35.0, maximo:60.0 },
-  { id:38, seccion:"CIRCUITO DE LUBRICACIÓN", tag:"PI 46003", equipo:"P4601B", parametro:"Presión de aceite", unidad:"barg", minimo:2.0, maximo:4.0 },
-  { id:39, seccion:"CIRCUITO DE LUBRICACIÓN", tag:"TI 46004", equipo:"P4601B", parametro:"Temperatura de aceite", unidad:"°C", minimo:35.0, maximo:60.0 },
-  { id:40, seccion:"CIRCUITO DE LUBRICACIÓN", tag:"LI 46005", equipo:"TK4601", parametro:"Nivel de aceite", unidad:"%", minimo:40.0, maximo:80.0 },
-  { id:41, seccion:"CIRCUITO DE LUBRICACIÓN", tag:"PI 46006", equipo:"F4601", parametro:"Presión antes del filtro", unidad:"barg", minimo:2.0, maximo:4.0 },
-  { id:42, seccion:"CIRCUITO DE LUBRICACIÓN", tag:"PI 46007", equipo:"F4601", parametro:"Presión después del filtro", unidad:"barg", minimo:1.8, maximo:3.8 },
-  { id:43, seccion:"CIRCUITO DE LUBRICACIÓN", tag:"TI 46008", equipo:"E4601", parametro:"Temperatura salida enfriador", unidad:"°C", minimo:35.0, maximo:55.0 },
-  { id:44, seccion:"CIRCUITO DE LUBRICACIÓN", tag:"PI 46009", equipo:"E4601", parametro:"Presión salida enfriador", unidad:"barg", minimo:1.8, maximo:3.8 },
-  { id:45, seccion:"CIRCUITO DE LUBRICACIÓN", tag:"TI 46010", equipo:"TK4601", parametro:"Temperatura estanque de aceite", unidad:"°C", minimo:30.0, maximo:55.0 },
+  {
+    id:1,
+    seccion:'AMONIACO',
+    tag:'LI45001',
+    equipo:'D4501',
+    parametro:'Nivel',
+    unidad:'%'
+  },
+
+  {
+    id:2,
+    seccion:'AMONIACO',
+    tag:'PDI45008',
+    equipo:'F4502',
+    parametro:'Presión diferencial',
+    unidad:'mbar'
+  },
+
+  {
+    id:3,
+    seccion:'AMONIACO',
+    tag:'PDI45003',
+    equipo:'F4501',
+    parametro:'Presión diferencial',
+    unidad:'mbar'
+  },
+
+  {
+    id:4,
+    seccion:'AMONIACO',
+    tag:'LI45021',
+    equipo:'D4502',
+    parametro:'Nivel',
+    unidad:'%'
+  },
+
+  {
+    id:5,
+    seccion:'AMONIACO',
+    tag:'TI45006',
+    equipo:'D4501',
+    parametro:'Temperatura',
+    unidad:'°C'
+  },
+
+  // =====================================================
+  // AGUA DE CALDERAS
+  // =====================================================
+
+  {
+    id:6,
+    seccion:'AGUA DE CALDERAS',
+    tag:'LG45025',
+    equipo:'D4506',
+    parametro:'Nivel',
+    unidad:'%'
+  },
+
+  {
+    id:7,
+    seccion:'AGUA DE CALDERAS',
+    tag:'LG45024',
+    equipo:'D4506',
+    parametro:'Nivel',
+    unidad:'%'
+  },
+
+  {
+    id:8,
+    seccion:'AGUA DE CALDERAS',
+    tag:'PI45047',
+    equipo:'D4506',
+    parametro:'Presión',
+    unidad:'barg'
+  },
+
+  {
+    id:9,
+    seccion:'AGUA DE CALDERAS',
+    tag:'PI45048',
+    equipo:'D4506',
+    parametro:'Presión',
+    unidad:'barg'
+  },
+
+  {
+    id:10,
+    seccion:'AGUA DE CALDERAS',
+    tag:'AMP_P4506A',
+    equipo:'P4506A',
+    parametro:'Amperaje',
+    unidad:'A'
+  },
+
+  {
+    id:11,
+    seccion:'AGUA DE CALDERAS',
+    tag:'AMP_P4506B',
+    equipo:'P4506B',
+    parametro:'Amperaje',
+    unidad:'A'
+  },
+
+  {
+    id:12,
+    seccion:'AGUA DE CALDERAS',
+    tag:'PI45082',
+    equipo:'D4506',
+    parametro:'Presión',
+    unidad:'barg'
+  },
+
+  {
+    id:13,
+    seccion:'AGUA DE CALDERAS',
+    tag:'LG45026B',
+    equipo:'D4506',
+    parametro:'Nivel',
+    unidad:'%'
+  },
+
+  // =====================================================
+  // AIRE DE SELLO (TODOS)
+  // =====================================================
+
+  {
+    id:14,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45775',
+    equipo:'M4502',
+    parametro:'Presión',
+    unidad:'mbarg'
+  },
+
+  {
+    id:15,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45771',
+    equipo:'M4502',
+    parametro:'Presión',
+    unidad:'mbarg'
+  },
+
+  {
+    id:16,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45761',
+    equipo:'M4502',
+    parametro:'Presión',
+    unidad:'mbarg'
+  },
+
+  {
+    id:17,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45763',
+    equipo:'K4501',
+    parametro:'Presión',
+    unidad:'mbarg'
+  },
+
+  {
+    id:18,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45762',
+    equipo:'K4501',
+    parametro:'Presión',
+    unidad:'mbarg'
+  },
+
+  {
+    id:19,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45776',
+    equipo:'K4501',
+    parametro:'Presión',
+    unidad:'mbarg'
+  },
+
+  // =====================================================
+  // AGUA FRIA (TODOS)
+  // =====================================================
+
+  {
+    id:20,
+    seccion:'AGUA FRIA',
+    tag:'PI45067',
+    equipo:'E4501',
+    parametro:'Presión',
+    unidad:'barg'
+  },
+
+  {
+    id:21,
+    seccion:'AGUA FRIA',
+    tag:'TI45008',
+    equipo:'E4501',
+    parametro:'Temperatura',
+    unidad:'°C'
+  },
+
+  {
+    id:22,
+    seccion:'AGUA FRIA',
+    tag:'PI45068',
+    equipo:'E4502',
+    parametro:'Presión',
+    unidad:'barg'
+  },
+
+  {
+    id:23,
+    seccion:'AGUA FRIA',
+    tag:'TI45010',
+    equipo:'E4502',
+    parametro:'Temperatura',
+    unidad:'°C'
+  },
+
+  {
+    id:24,
+    seccion:'AGUA FRIA',
+    tag:'PI45069',
+    equipo:'E4503',
+    parametro:'Presión',
+    unidad:'barg'
+  },
+
+  {
+    id:25,
+    seccion:'AGUA FRIA',
+    tag:'TI45012',
+    equipo:'E4503',
+    parametro:'Temperatura',
+    unidad:'°C'
+  },
+
+  {
+    id:26,
+    seccion:'AGUA FRIA',
+    tag:'PI45070',
+    equipo:'E4504',
+    parametro:'Presión',
+    unidad:'barg'
+  },
+
+  {
+    id:27,
+    seccion:'AGUA FRIA',
+    tag:'TI45014',
+    equipo:'E4504',
+    parametro:'Temperatura',
+    unidad:'°C'
+  },
+
+  {
+    id:28,
+    seccion:'AGUA FRIA',
+    tag:'PI45071',
+    equipo:'E4505',
+    parametro:'Presión',
+    unidad:'barg'
+  },
+
+  {
+    id:29,
+    seccion:'AGUA FRIA',
+    tag:'TI45016',
+    equipo:'E4505',
+    parametro:'Temperatura',
+    unidad:'°C'
+  },
+
+  {
+    id:30,
+    seccion:'AGUA FRIA',
+    tag:'PI45072',
+    equipo:'E4506',
+    parametro:'Presión',
+    unidad:'barg'
+  },
+
+  {
+    id:31,
+    seccion:'AGUA FRIA',
+    tag:'TI45018',
+    equipo:'E4506',
+    parametro:'Temperatura',
+    unidad:'°C'
+  },
+
+  {
+    id:32,
+    seccion:'AGUA FRIA',
+    tag:'PI45073',
+    equipo:'E4507',
+    parametro:'Presión',
+    unidad:'barg'
+  },
+
+  {
+    id:33,
+    seccion:'AGUA FRIA',
+    tag:'TI45020',
+    equipo:'E4507',
+    parametro:'Temperatura',
+    unidad:'°C'
+  },
+
+  // =====================================================
+  // COOLING WATER
+  // =====================================================
+
+  {
+    id:34,
+    seccion:'COOLING WATER',
+    tag:'TI45036',
+    equipo:'E4510',
+    parametro:'Temperatura',
+    unidad:'°C'
+  },
+
+  {
+    id:35,
+    seccion:'COOLING WATER',
+    tag:'TI45042',
+    equipo:'E4511',
+    parametro:'Temperatura',
+    unidad:'°C'
+  },
 
   // =====================================================
   // SISTEMA DE VAPOR D4511
   // =====================================================
 
-  { id:46, seccion:"SISTEMA DE VAPOR D4511", tag:"PI 46101", equipo:"D4511", parametro:"Presión de vapor", unidad:"barg", minimo:4.5, maximo:7.5 },
-  { id:47, seccion:"SISTEMA DE VAPOR D4511", tag:"TI 46102", equipo:"D4511", parametro:"Temperatura de vapor", unidad:"°C", minimo:150.0, maximo:190.0 },
-  { id:48, seccion:"SISTEMA DE VAPOR D4511", tag:"PI 46103", equipo:"D4511", parametro:"Presión retorno de condensado", unidad:"barg", minimo:0.2, maximo:1.5 },
-  { id:49, seccion:"SISTEMA DE VAPOR D4511", tag:"TI 46104", equipo:"D4511", parametro:"Temperatura retorno de condensado", unidad:"°C", minimo:80.0, maximo:110.0 },
-  { id:50, seccion:"SISTEMA DE VAPOR D4511", tag:"PI 46105", equipo:"D4511", parametro:"Presión línea principal", unidad:"barg", minimo:4.5, maximo:7.5 },
-  { id:51, seccion:"SISTEMA DE VAPOR D4511", tag:"TI 46106", equipo:"D4511", parametro:"Temperatura línea principal", unidad:"°C", minimo:150.0, maximo:190.0 },
-  { id:52, seccion:"SISTEMA DE VAPOR D4511", tag:"PI 46107", equipo:"D4511", parametro:"Presión descarga trampa", unidad:"barg", minimo:0.0, maximo:1.5 },
-  { id:53, seccion:"SISTEMA DE VAPOR D4511", tag:"TI 46108", equipo:"D4511", parametro:"Temperatura descarga trampa", unidad:"°C", minimo:80.0, maximo:110.0 },
-  { id:54, seccion:"SISTEMA DE VAPOR D4511", tag:"PI 46109", equipo:"D4511", parametro:"Presión colector de vapor", unidad:"barg", minimo:4.5, maximo:7.5 },
-  { id:55, seccion:"SISTEMA DE VAPOR D4511", tag:"TI 46110", equipo:"D4511", parametro:"Temperatura colector de vapor", unidad:"°C", minimo:150.0, maximo:190.0 },
+  {
+    id:36,
+    seccion:'SISTEMA DE VAPOR D4511',
+    tag:'LI45011',
+    equipo:'D4511',
+    parametro:'Nivel',
+    unidad:'%'
+  },
 
   // =====================================================
   // CONDENSADOR DE SUPERFICIE
   // =====================================================
 
-  { id:56, seccion:"CONDENSADOR DE SUPERFICIE", tag:"PI 46201", equipo:"E4621", parametro:"Vacío del condensador", unidad:"kPa", minimo:-95.0, maximo:-80.0 },
-  { id:57, seccion:"CONDENSADOR DE SUPERFICIE", tag:"TI 46202", equipo:"E4621", parametro:"Temperatura entrada agua", unidad:"°C", minimo:18.0, maximo:28.0 },
-  { id:58, seccion:"CONDENSADOR DE SUPERFICIE", tag:"TI 46203", equipo:"E4621", parametro:"Temperatura salida agua", unidad:"°C", minimo:22.0, maximo:35.0 },
-  { id:59, seccion:"CONDENSADOR DE SUPERFICIE", tag:"PI 46204", equipo:"E4621", parametro:"Presión entrada agua", unidad:"barg", minimo:2.0, maximo:4.5 },
-  { id:60, seccion:"CONDENSADOR DE SUPERFICIE", tag:"PI 46205", equipo:"E4621", parametro:"Presión salida agua", unidad:"barg", minimo:1.5, maximo:4.0 }
-,
-  { id:61, seccion:"CONDENSADOR DE SUPERFICIE", tag:"TI 46206", equipo:"E4621", parametro:"Temperatura carcasa", unidad:"°C", minimo:25.0, maximo:45.0 },
-  { id:62, seccion:"CONDENSADOR DE SUPERFICIE", tag:"LI 46207", equipo:"E4621", parametro:"Nivel de condensado", unidad:"%", minimo:20.0, maximo:80.0 },
-  { id:63, seccion:"CONDENSADOR DE SUPERFICIE", tag:"PI 46208", equipo:"E4621", parametro:"Presión drenaje condensado", unidad:"barg", minimo:0.0, maximo:1.0 },
+  {
+    id:37,
+    seccion:'CONDENSADOR DE SUPERFICIE',
+    tag:'PI45058',
+    equipo:'E4521',
+    parametro:'Presión',
+    unidad:'barg'
+  },
 
-  // =====================================================
-  // SISTEMA DE VAPOR D4505
-  // =====================================================
+  {
+    id:38,
+    seccion:'CONDENSADOR DE SUPERFICIE',
+    tag:'PI45059',
+    equipo:'E4521',
+    parametro:'Presión',
+    unidad:'barg'
+  },
 
-  { id:64, seccion:"SISTEMA DE VAPOR D4505", tag:"PI 46301", equipo:"D4505", parametro:"Presión de vapor", unidad:"barg", minimo:4.5, maximo:7.5 },
-  { id:65, seccion:"SISTEMA DE VAPOR D4505", tag:"TI 46302", equipo:"D4505", parametro:"Temperatura de vapor", unidad:"°C", minimo:150.0, maximo:190.0 },
-  { id:66, seccion:"SISTEMA DE VAPOR D4505", tag:"PI 46303", equipo:"D4505", parametro:"Presión retorno de condensado", unidad:"barg", minimo:0.2, maximo:1.5 },
-  { id:67, seccion:"SISTEMA DE VAPOR D4505", tag:"TI 46304", equipo:"D4505", parametro:"Temperatura retorno de condensado", unidad:"°C", minimo:80.0, maximo:110.0 },
-  { id:68, seccion:"SISTEMA DE VAPOR D4505", tag:"PI 46305", equipo:"D4505", parametro:"Presión línea principal", unidad:"barg", minimo:4.5, maximo:7.5 },
-  { id:69, seccion:"SISTEMA DE VAPOR D4505", tag:"TI 46306", equipo:"D4505", parametro:"Temperatura línea principal", unidad:"°C", minimo:150.0, maximo:190.0 },
-  { id:70, seccion:"SISTEMA DE VAPOR D4505", tag:"PI 46307", equipo:"D4505", parametro:"Presión descarga trampa", unidad:"barg", minimo:0.0, maximo:1.5 },
-  { id:71, seccion:"SISTEMA DE VAPOR D4505", tag:"TI 46308", equipo:"D4505", parametro:"Temperatura descarga trampa", unidad:"°C", minimo:80.0, maximo:110.0 },
-  { id:72, seccion:"SISTEMA DE VAPOR D4505", tag:"PI 46309", equipo:"D4505", parametro:"Presión colector de vapor", unidad:"barg", minimo:4.5, maximo:7.5 },
-  { id:73, seccion:"SISTEMA DE VAPOR D4505", tag:"TI 46310", equipo:"D4505", parametro:"Temperatura colector de vapor", unidad:"°C", minimo:150.0, maximo:190.0 },
-  { id:74, seccion:"SISTEMA DE VAPOR D4505", tag:"PI 46311", equipo:"D4505", parametro:"Presión alimentación secundaria", unidad:"barg", minimo:3.5, maximo:6.5 },
-  { id:75, seccion:"SISTEMA DE VAPOR D4505", tag:"TI 46312", equipo:"D4505", parametro:"Temperatura alimentación secundaria", unidad:"°C", minimo:140.0, maximo:185.0 },
-  { id:76, seccion:"SISTEMA DE VAPOR D4505", tag:"PI 46313", equipo:"D4505", parametro:"Presión distribución", unidad:"barg", minimo:3.5, maximo:6.5 },
-  { id:77, seccion:"SISTEMA DE VAPOR D4505", tag:"TI 46314", equipo:"D4505", parametro:"Temperatura distribución", unidad:"°C", minimo:140.0, maximo:185.0 },
-  { id:78, seccion:"SISTEMA DE VAPOR D4505", tag:"PI 46315", equipo:"D4505", parametro:"Presión purga", unidad:"barg", minimo:0.0, maximo:1.5 },
-  { id:79, seccion:"SISTEMA DE VAPOR D4505", tag:"TI 46316", equipo:"D4505", parametro:"Temperatura purga", unidad:"°C", minimo:80.0, maximo:110.0 },
-  { id:80, seccion:"SISTEMA DE VAPOR D4505", tag:"PI 46317", equipo:"D4505", parametro:"Presión drenaje", unidad:"barg", minimo:0.0, maximo:1.5 },
-  { id:81, seccion:"SISTEMA DE VAPOR D4505", tag:"TI 46318", equipo:"D4505", parametro:"Temperatura drenaje", unidad:"°C", minimo:80.0, maximo:110.0 },
-  { id:82, seccion:"SISTEMA DE VAPOR D4505", tag:"PI 46319", equipo:"D4505", parametro:"Presión retorno principal", unidad:"barg", minimo:0.2, maximo:1.5 },
-  { id:83, seccion:"SISTEMA DE VAPOR D4505", tag:"TI 46320", equipo:"D4505", parametro:"Temperatura retorno principal", unidad:"°C", minimo:80.0, maximo:110.0 },
+  {
+    id:39,
+    seccion:'CONDENSADOR DE SUPERFICIE',
+    tag:'TI45065',
+    equipo:'E4521',
+    parametro:'Temperatura',
+    unidad:'°C'
+  },
+
+  {
+    id:40,
+    seccion:'CONDENSADOR DE SUPERFICIE',
+    tag:'TI45066',
+    equipo:'E4521',
+    parametro:'Temperatura',
+    unidad:'°C'
+  },
 
   // =====================================================
   // ACEITE DE CONTROL
   // =====================================================
 
-  { id:84, seccion:"ACEITE DE CONTROL", tag:"PI 46401", equipo:"HPU4501", parametro:"Presión de aceite", unidad:"barg", minimo:90.0, maximo:130.0 },
-  { id:85, seccion:"ACEITE DE CONTROL", tag:"TI 46402", equipo:"HPU4501", parametro:"Temperatura de aceite", unidad:"°C", minimo:35.0, maximo:55.0 },
-  { id:86, seccion:"ACEITE DE CONTROL", tag:"LI 46403", equipo:"TK4641", parametro:"Nivel de aceite", unidad:"%", minimo:40.0, maximo:80.0 },
-  { id:87, seccion:"ACEITE DE CONTROL", tag:"PI 46404", equipo:"F4641", parametro:"Presión antes del filtro", unidad:"barg", minimo:90.0, maximo:130.0 },
-  { id:88, seccion:"ACEITE DE CONTROL", tag:"PI 46405", equipo:"F4641", parametro:"Presión después del filtro", unidad:"barg", minimo:88.0, maximo:128.0 },
-  { id:89, seccion:"ACEITE DE CONTROL", tag:"TI 46406", equipo:"E4641", parametro:"Temperatura salida enfriador", unidad:"°C", minimo:35.0, maximo:55.0 },
-  { id:90, seccion:"ACEITE DE CONTROL", tag:"PI 46407", equipo:"E4641", parametro:"Presión salida enfriador", unidad:"barg", minimo:88.0, maximo:128.0 }
-,
-  { id:91, seccion:"ACEITE DE CONTROL", tag:"TI 46408", equipo:"TK4641", parametro:"Temperatura estanque de aceite", unidad:"°C", minimo:30.0, maximo:55.0 },
-  { id:92, seccion:"ACEITE DE CONTROL", tag:"PI 46409", equipo:"HPU4501", parametro:"Presión retorno", unidad:"barg", minimo:0.5, maximo:5.0 },
-  { id:93, seccion:"ACEITE DE CONTROL", tag:"TI 46410", equipo:"HPU4501", parametro:"Temperatura retorno", unidad:"°C", minimo:35.0, maximo:55.0 },
-  { id:94, seccion:"ACEITE DE CONTROL", tag:"PI 46411", equipo:"HPU4501", parametro:"Presión acumulador", unidad:"barg", minimo:95.0, maximo:130.0 },
-  { id:95, seccion:"ACEITE DE CONTROL", tag:"TI 46412", equipo:"HPU4501", parametro:"Temperatura acumulador", unidad:"°C", minimo:35.0, maximo:55.0 },
-  { id:96, seccion:"ACEITE DE CONTROL", tag:"PI 46413", equipo:"HPU4501", parametro:"Presión manifold", unidad:"barg", minimo:95.0, maximo:130.0 },
-  { id:97, seccion:"ACEITE DE CONTROL", tag:"TI 46414", equipo:"HPU4501", parametro:"Temperatura manifold", unidad:"°C", minimo:35.0, maximo:55.0 },
-  { id:98, seccion:"ACEITE DE CONTROL", tag:"PI 46415", equipo:"HPU4501", parametro:"Presión suministro actuadores", unidad:"barg", minimo:95.0, maximo:130.0 },
-  { id:99, seccion:"ACEITE DE CONTROL", tag:"TI 46416", equipo:"HPU4501", parametro:"Temperatura suministro actuadores", unidad:"°C", minimo:35.0, maximo:55.0 },
-  { id:100, seccion:"ACEITE DE CONTROL", tag:"PI 46417", equipo:"HPU4501", parametro:"Presión retorno actuadores", unidad:"barg", minimo:0.5, maximo:5.0 },
-  { id:101, seccion:"ACEITE DE CONTROL", tag:"TI 46418", equipo:"HPU4501", parametro:"Temperatura retorno actuadores", unidad:"°C", minimo:35.0, maximo:55.0 },
-  { id:102, seccion:"ACEITE DE CONTROL", tag:"PI 46419", equipo:"HPU4501", parametro:"Presión bomba A", unidad:"barg", minimo:95.0, maximo:130.0 },
-  { id:103, seccion:"ACEITE DE CONTROL", tag:"TI 46420", equipo:"HPU4501", parametro:"Temperatura bomba A", unidad:"°C", minimo:35.0, maximo:55.0 },
-  { id:104, seccion:"ACEITE DE CONTROL", tag:"PI 46421", equipo:"HPU4501", parametro:"Presión bomba B", unidad:"barg", minimo:95.0, maximo:130.0 },
-  { id:105, seccion:"ACEITE DE CONTROL", tag:"TI 46422", equipo:"HPU4501", parametro:"Temperatura bomba B", unidad:"°C", minimo:35.0, maximo:55.0 },
-  { id:106, seccion:"ACEITE DE CONTROL", tag:"PI 46423", equipo:"HPU4501", parametro:"Presión bomba C", unidad:"barg", minimo:95.0, maximo:130.0 },
-  { id:107, seccion:"ACEITE DE CONTROL", tag:"TI 46424", equipo:"HPU4501", parametro:"Temperatura bomba C", unidad:"°C", minimo:35.0, maximo:55.0 },
-  { id:108, seccion:"ACEITE DE CONTROL", tag:"PI 46425", equipo:"HPU4501", parametro:"Presión reserva", unidad:"barg", minimo:95.0, maximo:130.0 },
-  { id:109, seccion:"ACEITE DE CONTROL", tag:"TI 46426", equipo:"HPU4501", parametro:"Temperatura reserva", unidad:"°C", minimo:35.0, maximo:55.0 },
-  { id:110, seccion:"ACEITE DE CONTROL", tag:"PI 46427", equipo:"HPU4501", parametro:"Presión línea de control", unidad:"barg", minimo:95.0, maximo:130.0 },
-  { id:111, seccion:"ACEITE DE CONTROL", tag:"TI 46428", equipo:"HPU4501", parametro:"Temperatura línea de control", unidad:"°C", minimo:35.0, maximo:55.0 }
+  {
+    id:41,
+    seccion:'ACEITE DE CONTROL',
+    tag:'AMP_P4517A',
+    equipo:'P4517A',
+    parametro:'Amperaje',
+    unidad:'A'
+  },
+
+  {
+    id:42,
+    seccion:'ACEITE DE CONTROL',
+    tag:'AMP_P4517B',
+    equipo:'P4517B',
+    parametro:'Amperaje',
+    unidad:'A'
+  },
+
+  {
+    id:43,
+    seccion:'ACEITE DE CONTROL',
+    tag:'PI45649',
+    equipo:'D4517',
+    parametro:'Presión',
+    unidad:'barg'
+  },
+
+  // =====================================================
+  // PURGA (ÚLTIMO ELEMENTO)
+  // =====================================================
+
+  {
+    id:44,
+    seccion:'PURGA',
+    tag:'PURGA',
+    equipo:'D4506',
+    parametro:'Purga',
+    unidad:'%'
+  }
+
 ];
 
-// =====================================================
-// ORDEN DE SECCIONES
-// =====================================================
-
-function normalizarSecciones(){
-  PUNTOS.forEach(p=>{
-    const eq = String(p.equipo).toUpperCase();
-    if(eq.includes('K4501') || p.seccion === 'K4501'){
-      p.seccion = 'COMPRESOR K4501';
-    }
-    if(eq.includes('D4511')){
-      p.seccion = 'SISTEMA DE VAPOR D4511';
-    }
-    if(eq.includes('D4505')){
-      p.seccion = 'SISTEMA DE VAPOR D4505';
-    }
-  });
-}
+// -----------------------------------------------------
+// ORDENAR SEGÚN EL ORDEN DEFINIDO
+// -----------------------------------------------------
 
 function ordenarPuntos(){
-  normalizarSecciones();
+
   PUNTOS.sort((a,b)=>{
+
     const sa = SECCIONES.indexOf(a.seccion);
+
     const sb = SECCIONES.indexOf(b.seccion);
-    if(sa!==sb) return sa-sb;
-    return String(a.tag).localeCompare(String(b.tag),'es',{numeric:true});
+
+    if(sa !== sb) return sa - sb;
+
+    return a.id - b.id;
+
   });
+
 }
 
-// =====================================================
-// RONDA
-// =====================================================
-
-function prepararRonda(){
-  ordenarPuntos();
-  ronda = PUNTOS.map(p=>({ ...p, lectura:'' }));
-  indice = 0;
-  buffer = '';
-}
+// -----------------------------------------------------
+// RENDER DE UN INSTRUMENTO
+// -----------------------------------------------------
 
 async function renderElemento(){
+
   const p = ronda[indice];
+
   if(!p) return;
 
-  if($('seccion')) $('seccion').textContent = p.seccion;
-  if($('tag')) $('tag').textContent = p.tag;
-  if($('equipo')) $('equipo').textContent = p.equipo;
-  if($('parametro')) $('parametro').textContent = p.parametro + ' · ' + p.unidad;
-  if($('rango')){
+  if($('seccion'))
+    $('seccion').textContent = p.seccion;
+
+  if($('tag'))
+    $('tag').textContent = p.tag;
+
+  if($('equipo'))
+    $('equipo').textContent = p.equipo;
+
+  if($('parametro'))
+    $('parametro').textContent =
+      p.parametro + ' · ' + p.unidad;
+
+  // Rango y último registro en la misma línea
+  if($('rango'))
     $('rango').textContent =
-      (p.minimo!==undefined && p.maximo!==undefined)
+      p.minimo !== undefined && p.maximo !== undefined
         ? 'Rango ' + p.minimo + ' - ' + p.maximo + ' ' + p.unidad
         : '';
-  }
+
   if($('ultimo')){
-    const ult = await ultimoRegistro(p.id);
+    const ult = await ultimoValor(p.tag);
     $('ultimo').textContent = 'Último: ' + ult;
   }
-  if($('contador')){
-    $('contador').textContent = (indice+1) + ' / ' + ronda.length;
-  }
-  if($('valorActual')) $('valorActual').textContent = buffer;
+
+  if($('contador'))
+    $('contador').textContent =
+      (indice + 1) + ' / ' + ronda.length;
+
+  if($('valorActual'))
+    $('valorActual').textContent = buffer;
+
 }
+
+// -----------------------------------------------------
+// ÚLTIMO VALOR DE UN TAG
+// -----------------------------------------------------
+
+async function ultimoValor(tag){
+
+  const sesiones = await leerSesiones();
+
+  for(let i = sesiones.length - 1; i >= 0; i--){
+
+    const s = sesiones[i];
+
+    if(!s.registros) continue;
+
+    const r =
+      s.registros.find(x => x.tag === tag);
+
+    if(r) return r.valor;
+
+  }
+
+  return '—';
+
+}
+
+// -----------------------------------------------------
+// BUFFER DE ESCRITURA
+// -----------------------------------------------------
 
 function limpiarBuffer(){
+
   buffer = '';
-  if($('valorActual')) $('valorActual').textContent = '';
+
+  if($('valorActual'))
+    $('valorActual').textContent = '';
+
 }
 
-function actualizarValor(){
-  if($('valorActual')) $('valorActual').textContent = buffer;
+function actualizarBuffer(){
+
+  if($('valorActual'))
+    $('valorActual').textContent = buffer;
+
 }
+
+// -----------------------------------------------------
+// NAVEGACIÓN (SIN GESTOS)
+// -----------------------------------------------------
 
 function siguiente(){
-  if(indice < ronda.length-1){
+
+  if(indice < ronda.length - 1){
+
     indice++;
+
     limpiarBuffer();
+
     renderElemento();
+
   }
+
 }
 
 function anterior(){
+
   if(indice > 0){
+
     indice--;
+
     limpiarBuffer();
+
     renderElemento();
+
   }
+
 }
 
-// =====================================================
-// TECLADO
-// =====================================================
+// -----------------------------------------------------
+// TECLADO NUMÉRICO
+// -----------------------------------------------------
 
 function agregarDigito(k){
-  if(k===',' && buffer.includes(',')) return;
+
+  if(k === ',' && buffer.includes(','))
+    return;
+
   if(buffer.includes(',')){
+
     const dec = buffer.split(',')[1];
-    if(dec.length>=2) return;
+
+    if(dec.length >= 2)
+      return;
+
   }
+
   buffer += k;
-  actualizarValor();
+
+  actualizarBuffer();
+
 }
 
 function borrarDigito(){
-  if(buffer.length===0) return;
+
+  if(buffer.length === 0)
+    return;
+
   buffer = buffer.slice(0,-1);
-  actualizarValor();
+
+  actualizarBuffer();
+
 }
 
-async function guardarActual(){
-  const p = ronda[indice];
-  if(buffer.trim()==='') return;
+document
+  .querySelectorAll('#teclado [data-key]')
+  .forEach(btn =>{
 
-  const valor = buffer.replace(',', '.');
+    btn.addEventListener(
+      'click',
+      () => agregarDigito(btn.dataset.key)
+    );
 
-  await guardarRegistro({
-    PuntoID:p.id,
-    TAG:p.tag,
-    Equipo:p.equipo,
-    Seccion:p.seccion,
-    Parametro:p.parametro,
-    Unidad:p.unidad,
-    Valor:valor,
-    Fecha:ahoraISO()
   });
 
-  if(indice < ronda.length-1){
-    indice++;
-    limpiarBuffer();
-    renderElemento();
-  }else{
-    finalizarSesion();
+if($('backspace'))
+  $('backspace').addEventListener(
+    'click',
+    borrarDigito
+  );
+
+// -----------------------------------------------------
+// ATAJOS DE TECLADO FÍSICO
+// -----------------------------------------------------
+
+document.addEventListener(
+  'keydown',
+  e =>{
+
+    if(e.key >= '0' && e.key <= '9')
+      agregarDigito(e.key);
+
+    if(e.key === ',' || e.key === '.')
+      agregarDigito(',');
+
+    if(e.key === 'Backspace')
+      borrarDigito();
+
+    if(e.key === 'Enter')
+      guardarActual();
+
   }
+);
+
+// -----------------------------------------------------
+// EVENTOS DE NAVEGACIÓN
+// -----------------------------------------------------
+
+if($('btnAnterior'))
+  $('btnAnterior').addEventListener(
+    'click',
+    anterior
+  );
+
+if($('btnSiguiente'))
+  $('btnSiguiente').addEventListener(
+    'click',
+    siguiente
+  );
+
+if($('btnAceptar'))
+  $('btnAceptar').addEventListener(
+    'click',
+    guardarActual
+  );
+
+// NOTA:
+// Se eliminaron completamente los eventos
+// touchstart y touchend.
+// Ya NO existe navegación por deslizamiento.
+
+// -----------------------------------------------------
+// GUARDAR LECTURA ACTUAL
+// -----------------------------------------------------
+
+async function guardarActual(){
+
+  const p = ronda[indice];
+
+  if(!p) return;
+
+  const valor = buffer.trim();
+
+  if(valor === '') return;
+
+  ronda[indice].lectura = valor;
+
+  sesionActual.registros.push({
+    seccion: p.seccion,
+    tag: p.tag,
+    equipo: p.equipo,
+    parametro: p.parametro,
+    unidad: p.unidad,
+    valor: valor
+  });
+
+  if(indice < ronda.length - 1){
+
+    indice++;
+
+    limpiarBuffer();
+
+    renderElemento();
+
+  }else{
+
+    await finalizarRonda();
+
+  }
+
 }
 
+// -----------------------------------------------------
+// INICIAR RONDA
+// -----------------------------------------------------
+
 async function iniciarRonda(){
-  if($('purga')) await guardarConfig('purga',$('purga').value);
-  if($('filtro')) await guardarConfig('filtro',$('filtro').value);
 
   prepararRonda();
 
-  if($('inicio')) $('inicio').classList.remove('active');
-  if($('ronda')) $('ronda').classList.add('active');
+  if($('inicio'))
+    $('inicio').classList.remove('active');
+
+  if($('historial'))
+    $('historial').classList.remove('active');
+
+  if($('ronda'))
+    $('ronda').classList.add('active');
 
   renderElemento();
+
 }
 
-async function finalizarSesion(){
-  if($('purga')) $('purga').value = '';
-  if($('filtro')) $('filtro').value = '';
+// -----------------------------------------------------
+// FINALIZAR RONDA
+// -----------------------------------------------------
 
-  indice = 0;
-  buffer = '';
+async function finalizarRonda(){
 
-  if($('ronda')) $('ronda').classList.remove('active');
-  if($('inicio')) $('inicio').classList.add('active');
+  await guardarSesion();
 
-  await cargarPurgaFiltro();
+  if($('ronda'))
+    $('ronda').classList.remove('active');
 
-  alert('Ronda finalizada correctamente');
+  if($('historial'))
+    $('historial').classList.add('active');
+
+  await mostrarHistorial();
+
 }
 
-// =====================================================
-// GESTOS
-// =====================================================
+// -----------------------------------------------------
+// HISTORIAL POR DÍA
+// -----------------------------------------------------
 
-let startX = 0;
+async function mostrarHistorial(){
 
-document.addEventListener('touchstart',e=>{
-  startX = e.changedTouches[0].clientX;
-},{passive:true});
+  const lista = $('listaHistorial');
 
-document.addEventListener('touchend',e=>{
-  const dx = e.changedTouches[0].clientX - startX;
-  if(Math.abs(dx) < 60) return;
-  if(dx < 0) siguiente();
-  else anterior();
-},{passive:true});
+  if(!lista) return;
 
-// =====================================================
-// EVENTOS
-// =====================================================
+  lista.innerHTML = '';
 
-document.querySelectorAll('#teclado [data-key]').forEach(btn=>{
-  btn.addEventListener('click',()=>agregarDigito(btn.dataset.key));
-});
+  const sesiones = await leerSesiones();
 
-if($('backspace')) $('backspace').addEventListener('click',borrarDigito);
-if($('btnAceptar')) $('btnAceptar').addEventListener('click',guardarActual);
-if($('btnIniciar')) $('btnIniciar').addEventListener('click',iniciarRonda);
-if($('btnAnterior')) $('btnAnterior').addEventListener('click',anterior);
-if($('btnSiguiente')) $('btnSiguiente').addEventListener('click',siguiente);
-if($('btnFinalizar')) $('btnFinalizar').addEventListener('click',finalizarSesion);
+  if(sesiones.length === 0){
 
-document.addEventListener('keydown',e=>{
-  if(e.key>='0' && e.key<='9') agregarDigito(e.key);
-  if(e.key===',' || e.key==='.') agregarDigito(',');
-  if(e.key==='Backspace') borrarDigito();
-  if(e.key==='Enter') guardarActual();
-});
+    lista.innerHTML =
+      '<div class="historial-dia">No existen registros.</div>';
 
-// =====================================================
-// EXPORTACIÓN CSV
-// =====================================================
+    return;
 
-async function exportarCSV(){
-  const tx = db.transaction('registros','readonly');
-  const req = tx.objectStore('registros').getAll();
+  }
 
-  req.onsuccess = ()=>{
-    const datos = req.result;
-    if(datos.length===0){
-      alert('No existen registros');
-      return;
-    }
+  const grupos = {};
 
-    const encabezado = ['Fecha','Seccion','Equipo','TAG','Parametro','Unidad','Valor'];
-    const filas = datos.map(r=>[
-      r.Fecha,r.Seccion,r.Equipo,r.TAG,r.Parametro,r.Unidad,r.Valor
-    ]);
+  sesiones.forEach(s=>{
 
-    const csv = [encabezado,...filas]
-      .map(x=>x.join(';'))
-      .join('\\n');
+    if(!grupos[s.fecha])
+      grupos[s.fecha] = [];
 
-    const blob = new Blob([csv],{
-      type:'text/csv;charset=utf-8;'
+    grupos[s.fecha].push(s);
+
+  });
+
+  Object.keys(grupos)
+    .sort()
+    .reverse()
+    .forEach(fecha=>{
+
+      const box = document.createElement('div');
+
+      box.className = 'historial-dia';
+
+      const h = document.createElement('h3');
+
+      h.textContent = fecha;
+
+      box.appendChild(h);
+
+      grupos[fecha]
+        .sort((a,b)=>
+          b.creado.localeCompare(a.creado)
+        )
+        .forEach(s=>{
+
+          const item = document.createElement('div');
+
+          item.className = 'historial-item';
+
+          const left =
+            document.createElement('div');
+
+          left.textContent =
+            s.hora + ' (' + s.registros.length + ' datos)';
+
+          const right =
+            document.createElement('button');
+
+          right.className = 'ghost';
+
+          right.textContent = 'Ver';
+
+          right.addEventListener(
+            'click',
+            ()=> verSesion(s)
+          );
+
+          item.appendChild(left);
+
+          item.appendChild(right);
+
+          box.appendChild(item);
+
+        });
+
+      lista.appendChild(box);
+
     });
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download =
-      'Toma_A45_' +
-      new Date().toISOString().slice(0,10) +
-      '.csv';
-
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 }
 
-console.log('Toma de datos de terreno A-45 lista');
-// =====================================================
+// -----------------------------------------------------
+// VER UNA SESIÓN
+// -----------------------------------------------------
+
+function verSesion(sesion){
+
+  let texto =
+    sesion.fecha + ' ' + sesion.hora + '\\n\\n';
+
+  sesion.registros.forEach(r=>{
+
+    texto +=
+      r.seccion + ' - ' +
+      r.tag + ' - ' +
+      r.valor + ' ' +
+      r.unidad + '\\n';
+
+  });
+
+  alert(texto);
+
+}
+
+// -----------------------------------------------------
+// EXPORTAR CSV
+// -----------------------------------------------------
+
+async function exportarCSV(){
+
+  const sesiones = await leerSesiones();
+
+  if(sesiones.length === 0){
+
+    alert('No existen registros');
+
+    return;
+
+  }
+
+  const filas = [[
+    'Fecha',
+    'Hora',
+    'Sección',
+    'TAG',
+    'Equipo',
+    'Parámetro',
+    'Unidad',
+    'Valor'
+  ]];
+
+  sesiones.forEach(s=>{
+
+    s.registros.forEach(r=>{
+
+      filas.push([
+        s.fecha,
+        s.hora,
+        r.seccion,
+        r.tag,
+        r.equipo,
+        r.parametro,
+        r.unidad,
+        r.valor
+      ]);
+
+    });
+
+  });
+
+  const csv =
+    filas
+      .map(f=>f.join(';'))
+      .join('\\n');
+
+  const blob =
+    new Blob(
+      [csv],
+      {type:'text/csv;charset=utf-8;'}
+    );
+
+  const url =
+    URL.createObjectURL(blob);
+
+  const a =
+    document.createElement('a');
+
+  a.href = url;
+
+  a.download =
+    'Toma_A45_' +
+    fechaChile().replaceAll('/','-') +
+    '.csv';
+
+  a.click();
+
+  URL.revokeObjectURL(url);
+
+}
+
+// -----------------------------------------------------
+// NAVEGACIÓN ENTRE PANTALLAS
+// -----------------------------------------------------
+
+async function abrirHistorial(){
+
+  if($('inicio'))
+    $('inicio').classList.remove('active');
+
+  if($('ronda'))
+    $('ronda').classList.remove('active');
+
+  if($('historial'))
+    $('historial').classList.add('active');
+
+  await mostrarHistorial();
+
+}
+
+function volverInicio(){
+
+  if($('historial'))
+    $('historial').classList.remove('active');
+
+  if($('ronda'))
+    $('ronda').classList.remove('active');
+
+  if($('inicio'))
+    $('inicio').classList.add('active');
+
+}
+
+// -----------------------------------------------------
+// EVENTOS PRINCIPALES
+// -----------------------------------------------------
+
+if($('btnIniciar'))
+  $('btnIniciar').addEventListener(
+    'click',
+    iniciarRonda
+  );
+
+if($('btnVerHistorial'))
+  $('btnVerHistorial').addEventListener(
+    'click',
+    abrirHistorial
+  );
+
+if($('btnNuevaRonda'))
+  $('btnNuevaRonda').addEventListener(
+    'click',
+    iniciarRonda
+  );
+
+if($('btnVolverInicio'))
+  $('btnVolverInicio').addEventListener(
+    'click',
+    volverInicio
+  );
+
+if($('btnFinalizar'))
+  $('btnFinalizar').addEventListener(
+    'click',
+    finalizarRonda
+  );
+
+// -----------------------------------------------------
+// INICIALIZACIÓN
+// -----------------------------------------------------
+
+(async function(){
+
+  await abrirDB();
+
+  ordenarPuntos();
+
+  actualizarFecha();
+
+})();
