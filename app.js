@@ -224,43 +224,43 @@ PUNTOS = [
     tag:'LI45001',
     equipo:'D4501',
     parametro:'Nivel',
-    unidad:'%'
+    unidad:'(70-90 cm)'
   },
 
   {
     id:2,
     seccion:'AMONIACO',
     tag:'PDI45008',
-    equipo:'F4502',
+    equipo:'F4506',
     parametro:'Presión diferencial',
-    unidad:'mbar'
+    unidad:'(<250 mbar)'
   },
 
   {
     id:3,
     seccion:'AMONIACO',
     tag:'PDI45003',
-    equipo:'F4501',
-    parametro:'Presión diferencial',
-    unidad:'mbar'
+    equipo:'F4501 A/B',
+    parametro:'Presión dif',
+    unidad:'(<1280 mbar)'
   },
 
   {
     id:4,
     seccion:'AMONIACO',
     tag:'LI45021',
-    equipo:'D4502',
+    equipo:'E4502',
     parametro:'Nivel',
-    unidad:'%'
+    unidad:'(88-112 cm)'
   },
 
   {
     id:5,
     seccion:'AMONIACO',
     tag:'TI45006',
-    equipo:'D4501',
+    equipo:'E4521',
     parametro:'Temperatura',
-    unidad:'°C'
+    unidad:'(95-100 °C)'
   },
 
   // =====================================================
@@ -271,54 +271,54 @@ PUNTOS = [
     id:6,
     seccion:'AGUA DE CALDERAS',
     tag:'LG45025',
-    equipo:'D4506',
+    equipo:'D4508 ELIMINOX',
     parametro:'Nivel',
-    unidad:'%'
+    unidad:'(0-50 cm)'
   },
 
   {
     id:7,
     seccion:'AGUA DE CALDERAS',
-    tag:'LG45024',
-    equipo:'D4506',
+    tag:'LG45040',
+    equipo:'D4509 FOSFATO',
     parametro:'Nivel',
-    unidad:'%'
+    unidad:'(0-50 cm)'
   },
 
   {
     id:8,
     seccion:'AGUA DE CALDERAS',
     tag:'PI45047',
-    equipo:'D4506',
+    equipo:'P4506-A',
     parametro:'Presión',
-    unidad:'barg'
+    unidad:'(39-43 barg)'
   },
 
   {
     id:9,
     seccion:'AGUA DE CALDERAS',
     tag:'PI45048',
-    equipo:'D4506',
+    equipo:'P4506-B',
     parametro:'Presión',
-    unidad:'barg'
+    unidad:'(39-43 barg)'
   },
 
   {
     id:10,
     seccion:'AGUA DE CALDERAS',
-    tag:'AMP_P4506A',
-    equipo:'P4506A',
+    tag:'AMPERAJE',
+    equipo:'P4506-A',
     parametro:'Amperaje',
-    unidad:'A'
+    unidad:'(150-180 Amp)'
   },
 
   {
     id:11,
     seccion:'AGUA DE CALDERAS',
-    tag:'AMP_P4506B',
-    equipo:'P4506B',
+    tag:'AMPERAJE',
+    equipo:'P4506-B',
     parametro:'Amperaje',
-    unidad:'A'
+    unidad:'(150-180 Amp)'
   },
 
   {
@@ -327,7 +327,7 @@ PUNTOS = [
     tag:'PI45082',
     equipo:'D4506',
     parametro:'Presión',
-    unidad:'barg'
+    unidad:'(0.4-0.6 barg)'
   },
 
   {
@@ -336,7 +336,7 @@ PUNTOS = [
     tag:'LG45026B',
     equipo:'D4506',
     parametro:'Nivel',
-    unidad:'%'
+    unidad:'(40-90 %)'
   },
 
   // =====================================================
@@ -349,7 +349,7 @@ PUNTOS = [
     tag:'PI45775',
     equipo:'M4502',
     parametro:'Presión',
-    unidad:'mbarg'
+    unidad:'(8.0-15 mbarg)'
   },
 
   {
@@ -358,7 +358,7 @@ PUNTOS = [
     tag:'PI45771',
     equipo:'M4502',
     parametro:'Presión',
-    unidad:'mbarg'
+    unidad:'(8.0-15 mbarg)'
   },
 
   {
@@ -367,7 +367,7 @@ PUNTOS = [
     tag:'PI45761',
     equipo:'M4502',
     parametro:'Presión',
-    unidad:'mbarg'
+    unidad:'(8.0-15 mbarg)'
   },
 
   {
@@ -376,7 +376,7 @@ PUNTOS = [
     tag:'PI45763',
     equipo:'K4501',
     parametro:'Presión',
-    unidad:'mbarg'
+    unidad:'(8.0-15 mbarg)'
   },
 
   {
@@ -385,16 +385,124 @@ PUNTOS = [
     tag:'PI45762',
     equipo:'K4501',
     parametro:'Presión',
-    unidad:'mbarg'
+    unidad:'(8.0-15 mbarg)'
   },
 
   {
     id:19,
     seccion:'AIRE DE SELLO',
-    tag:'PI45776',
-    equipo:'K4501',
+    tag:'PI45782',
+    equipo:'K4501-Z01',
     parametro:'Presión',
-    unidad:'mbarg'
+    unidad:'(8.0-15 mbarg)'
+  },
+
+  {
+    id:20,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45781',
+    equipo:'K4501-Z01',
+    parametro:'Presión',
+    unidad:'(8.0-15 mbarg)'
+  },
+
+  {
+    id:21,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45751',
+    equipo:'K4502',
+    parametro:'Presión',
+    unidad:'(8.0-15 mbarg)'
+  },
+
+ {
+    id:22,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45741',
+    equipo:'M4501',
+    parametro:'Presión',
+    unidad:'(8.0-15 mbarg)'
+  },
+
+ {
+    id:23,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45746',
+    equipo:'M4501',
+    parametro:'Presión',
+    unidad:'(8.0-15 mbarg)'
+  },
+
+ {
+    id:24,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45727',
+    equipo:'G4501-Z01',
+    parametro:'Presión',
+    unidad:'(8.0-15 mbarg)'
+  },
+
+ {
+    id:25,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45728',
+    equipo:'G4501-Z01',
+    parametro:'Presión',
+    unidad:'(8.0-15 mbarg)'
+  },
+
+ {
+    id:26,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45773',
+    equipo:'M4502',
+    parametro:'Presión',
+    unidad:'(0.1-0.2 mbarg)'
+  },
+
+ {
+    id:27,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45774',
+    equipo:'M4502',
+    parametro:'Presión',
+    unidad:'(0.5-1.0 mbarg)'
+  },
+
+ {
+    id:28,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45772',
+    equipo:'M4502',
+    parametro:'Presión',
+    unidad:'(0.1-0.2 mbarg)'
+  },
+
+ {
+    id:29,
+    seccion:'AIRE DE SELLO',
+    tag:'PDIT45750',
+    equipo:'K4502',
+    parametro:'Presión',
+    unidad:'(250-350 mbarg)'
+  },
+
+ {
+    id:30,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45749A',
+    equipo:'K4502',
+    parametro:'Presión',
+    unidad:'(2.5-4.0 barg)'
+  },
+
+ {
+    id:31,
+    seccion:'AIRE DE SELLO',
+    tag:'PI45752',
+    equipo:'K4502',
+    parametro:'Presión',
+    unidad:'(2.5-4.0 barg)'
   },
 
   // =====================================================
@@ -402,151 +510,62 @@ PUNTOS = [
   // =====================================================
 
   {
-    id:20,
-    seccion:'AGUA FRIA',
-    tag:'PI45067',
-    equipo:'E4501',
-    parametro:'Presión',
-    unidad:'barg'
-  },
-
-  {
-    id:21,
-    seccion:'AGUA FRIA',
-    tag:'TI45008',
-    equipo:'E4501',
-    parametro:'Temperatura',
-    unidad:'°C'
-  },
-
-  {
-    id:22,
-    seccion:'AGUA FRIA',
-    tag:'PI45068',
-    equipo:'E4502',
-    parametro:'Presión',
-    unidad:'barg'
-  },
-
-  {
-    id:23,
-    seccion:'AGUA FRIA',
-    tag:'TI45010',
-    equipo:'E4502',
-    parametro:'Temperatura',
-    unidad:'°C'
-  },
-
-  {
-    id:24,
-    seccion:'AGUA FRIA',
-    tag:'PI45069',
-    equipo:'E4503',
-    parametro:'Presión',
-    unidad:'barg'
-  },
-
-  {
-    id:25,
-    seccion:'AGUA FRIA',
-    tag:'TI45012',
-    equipo:'E4503',
-    parametro:'Temperatura',
-    unidad:'°C'
-  },
-
-  {
-    id:26,
-    seccion:'AGUA FRIA',
-    tag:'PI45070',
-    equipo:'E4504',
-    parametro:'Presión',
-    unidad:'barg'
-  },
-
-  {
-    id:27,
-    seccion:'AGUA FRIA',
-    tag:'TI45014',
-    equipo:'E4504',
-    parametro:'Temperatura',
-    unidad:'°C'
-  },
-
-  {
-    id:28,
-    seccion:'AGUA FRIA',
-    tag:'PI45071',
-    equipo:'E4505',
-    parametro:'Presión',
-    unidad:'barg'
-  },
-
-  {
-    id:29,
-    seccion:'AGUA FRIA',
-    tag:'TI45016',
-    equipo:'E4505',
-    parametro:'Temperatura',
-    unidad:'°C'
-  },
-
-  {
-    id:30,
-    seccion:'AGUA FRIA',
-    tag:'PI45072',
-    equipo:'E4506',
-    parametro:'Presión',
-    unidad:'barg'
-  },
-
-  {
-    id:31,
-    seccion:'AGUA FRIA',
-    tag:'TI45018',
-    equipo:'E4506',
-    parametro:'Temperatura',
-    unidad:'°C'
-  },
-
-  {
     id:32,
     seccion:'AGUA FRIA',
-    tag:'PI45073',
-    equipo:'E4507',
+    tag:'PI45007A',
+    equipo:'P4510-A',
     parametro:'Presión',
-    unidad:'barg'
+    unidad:'(6.0-7.0 barg)'
   },
 
   {
     id:33,
     seccion:'AGUA FRIA',
-    tag:'TI45020',
-    equipo:'E4507',
-    parametro:'Temperatura',
-    unidad:'°C'
+    tag:'PI45007B',
+    equipo:'P4510-B',
+    parametro:'Presión',
+    unidad:'(6.0-7.0 barg)'
   },
 
+  {
+    id:34,
+    seccion:'AGUA FRIA',
+    tag:'AMPERAJE',
+    equipo:'P4510-A',
+    parametro:'Presión',
+    unidad:'(60-80 Amp)'
+  },
+
+  {
+    id:35,
+    seccion:'AGUA FRIA',
+    tag:'AMPERAJE',
+    equipo:'P4510-B',
+    parametro:'Presión',
+    unidad:'(60-80 Amp)'
+  },
+
+  
   // =====================================================
   // COOLING WATER
   // =====================================================
 
   {
-    id:34,
+    id:36,
     seccion:'COOLING WATER',
     tag:'TI45036',
     equipo:'E4510',
     parametro:'Temperatura',
-    unidad:'°C'
+    unidad:'(40-55 °C)'
   },
 
   {
-    id:35,
+    id:37,
     seccion:'COOLING WATER',
     tag:'TI45042',
-    equipo:'E4511',
+    equipo:'E4513',
     parametro:'Temperatura',
-    unidad:'°C'
+    unidad:'(25-40 °C)'
   },
 
   // =====================================================
@@ -554,12 +573,12 @@ PUNTOS = [
   // =====================================================
 
   {
-    id:36,
+    id:38,
     seccion:'SISTEMA DE VAPOR D4511',
     tag:'LI45011',
     equipo:'D4511',
     parametro:'Nivel',
-    unidad:'%'
+    unidad:'(0-110 cm)'
   },
 
   // =====================================================
@@ -567,39 +586,39 @@ PUNTOS = [
   // =====================================================
 
   {
-    id:37,
-    seccion:'CONDENSADOR DE SUPERFICIE',
-    tag:'PI45058',
-    equipo:'E4521',
-    parametro:'Presión',
-    unidad:'barg'
-  },
-
-  {
-    id:38,
-    seccion:'CONDENSADOR DE SUPERFICIE',
-    tag:'PI45059',
-    equipo:'E4521',
-    parametro:'Presión',
-    unidad:'barg'
-  },
-
-  {
     id:39,
     seccion:'CONDENSADOR DE SUPERFICIE',
-    tag:'TI45065',
-    equipo:'E4521',
-    parametro:'Temperatura',
-    unidad:'°C'
+    tag:'PI45058',
+    equipo:'E4516',
+    parametro:'Presión',
+    unidad:'(1.0-2.0 barg)'
   },
 
   {
     id:40,
     seccion:'CONDENSADOR DE SUPERFICIE',
-    tag:'TI45066',
-    equipo:'E4521',
+    tag:'PI45059',
+    equipo:'E4516',
+    parametro:'Presión',
+    unidad:'(0.5-2.0 barg)'
+  },
+
+  {
+    id:41,
+    seccion:'CONDENSADOR DE SUPERFICIE',
+    tag:'TI45065',
+    equipo:'E4516',
     parametro:'Temperatura',
-    unidad:'°C'
+    unidad:'(12-25 °C)'
+  },
+
+  {
+    id:42,
+    seccion:'CONDENSADOR DE SUPERFICIE',
+    tag:'TI45066',
+    equipo:'E4516',
+    parametro:'Temperatura',
+    unidad:'(18-31 °C)'
   },
 
   // =====================================================
@@ -607,30 +626,30 @@ PUNTOS = [
   // =====================================================
 
   {
-    id:41,
-    seccion:'ACEITE DE CONTROL',
-    tag:'AMP_P4517A',
-    equipo:'P4517A',
-    parametro:'Amperaje',
-    unidad:'A'
-  },
-
-  {
-    id:42,
-    seccion:'ACEITE DE CONTROL',
-    tag:'AMP_P4517B',
-    equipo:'P4517B',
-    parametro:'Amperaje',
-    unidad:'A'
-  },
-
-  {
     id:43,
     seccion:'ACEITE DE CONTROL',
+    tag:'AMPERAJE',
+    equipo:'P4517-A',
+    parametro:'Amperaje',
+    unidad:'(3-4 Amp)'
+  },
+
+  {
+    id:44,
+    seccion:'ACEITE DE CONTROL',
+    tag:'AMPERAJE',
+    equipo:'P4517-B',
+    parametro:'Amperaje',
+    unidad:'(3-4 Amp)'
+  },
+
+  {
+    id:45,
+    seccion:'ACEITE DE CONTROL',
     tag:'PI45649',
-    equipo:'D4517',
+    equipo:'Descarga común',
     parametro:'Presión',
-    unidad:'barg'
+    unidad:'(145-175 barg)'
   },
 
   // =====================================================
@@ -638,12 +657,12 @@ PUNTOS = [
   // =====================================================
 
   {
-    id:44,
-    seccion:'PURGA',
+    id:46,
+    seccion:'PURGA CONTINUA',
     tag:'PURGA',
-    equipo:'D4506',
-    parametro:'Purga',
-    unidad:'%'
+    equipo:'D4505',
+    parametro:'Apertura',
+    unidad:'(0-100 %)'
   }
 
 ];
