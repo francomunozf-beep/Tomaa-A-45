@@ -274,3 +274,32 @@ border-top:0;
 .teclado button{padding:12px;font-size:22px;}
 #btnAceptar{padding:14px;}
 }
+
+/* =====================================================
+   BLOQUEO TOTAL DE SCROLL Y ZOOM
+   ===================================================== */
+
+html,
+body{
+  overflow:hidden;
+  overscroll-behavior:none;
+  touch-action:manipulation;
+}
+
+.screen{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+}
+
+.input-area{
+  overflow:hidden;
+}
+
+.keyboard-card{
+  flex:0 0 auto;
+}
+
+.nav-buttons{
+  flex:0 0 auto;
+}

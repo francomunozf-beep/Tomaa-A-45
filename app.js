@@ -61,6 +61,16 @@ function fechaChile(){
 
 function horaChile(){
 
+function turnoActual(){
+
+  const h = new Date().getHours();
+
+  return (h >= 8 && h < 20)
+    ? 'Turno Día'
+    : 'Turno Noche';
+
+}
+
   const d = new Date();
 
   return d.toLocaleTimeString(
@@ -194,17 +204,19 @@ function prepararRonda(){
 
   buffer = '';
 
-  sesionActual = {
+ sesionActual = {
 
-    fecha: fechaChile(),
+  fecha: fechaChile(),
 
-    hora: horaChile(),
+  hora: horaChile(),
 
-    creado: ahoraISO(),
+  turno: turnoActual(),
 
-    registros: []
+  creado: ahoraISO(),
 
-  };
+  registros: []
+
+};
 
 }
 
@@ -726,8 +738,10 @@ async function renderElemento(){
     $('contador').textContent =
       (indice + 1) + ' / ' + ronda.length;
 
-  if($('valorActual'))
-    $('valorActual').textContent = buffer;
+ buffer = ronda[indice].lectura || '';
+
+if($('valorActual'))
+  $('valorActual').textContent = buffer;
 
 }
 
@@ -782,11 +796,42 @@ function actualizarBuffer(){
 
 function siguiente(){
 
+  const p = ronda[indice];
+
+  // Guardado automático
+  if(buffer.trim() !== ''){
+
+    ronda[indice].lectura = buffer;
+
+    const existente =
+      sesionActual.registros.find(
+        x => x.tag === p.tag
+      );
+
+    if(existente){
+
+      existente.valor = buffer;
+
+    }else{
+
+      sesionActual.registros.push({
+        seccion: p.seccion,
+        tag: p.tag,
+        equipo: p.equipo,
+        parametro: p.parametro,
+        unidad: p.unidad,
+        valor: buffer
+      });
+
+    }
+
+  }
+
   if(indice < ronda.length - 1){
 
     indice++;
 
-    limpiarBuffer();
+    buffer = ronda[indice].lectura || '';
 
     renderElemento();
 
@@ -796,11 +841,42 @@ function siguiente(){
 
 function anterior(){
 
+  const p = ronda[indice];
+
+  // Guardado automático
+  if(buffer.trim() !== ''){
+
+    ronda[indice].lectura = buffer;
+
+    const existente =
+      sesionActual.registros.find(
+        x => x.tag === p.tag
+      );
+
+    if(existente){
+
+      existente.valor = buffer;
+
+    }else{
+
+      sesionActual.registros.push({
+        seccion: p.seccion,
+        tag: p.tag,
+        equipo: p.equipo,
+        parametro: p.parametro,
+        unidad: p.unidad,
+        valor: buffer
+      });
+
+    }
+
+  }
+
   if(indice > 0){
 
     indice--;
 
-    limpiarBuffer();
+    buffer = ronda[indice].lectura || '';
 
     renderElemento();
 
@@ -1052,8 +1128,13 @@ async function mostrarHistorial(){
           const left =
             document.createElement('div');
 
-          left.textContent =
-            s.hora + ' (' + s.registros.length + ' datos)';
+left.textContent =
+  s.hora +
+  ' - ' +
+  s.turno +
+  ' (' +
+  s.registros.length +
+  ' datos)';
 
           const right =
             document.createElement('button');
@@ -1088,15 +1169,26 @@ async function mostrarHistorial(){
 function verSesion(sesion){
 
   let texto =
-    sesion.fecha + ' ' + sesion.hora + '\\n\\n';
+    sesion.fecha + ' ' +
+    sesion.hora + ' - ' +
+    sesion.turno + '\\n\\n';
 
-  sesion.registros.forEach(r=>{
+  const ordenados =
+    [...sesion.registros].sort(
+      (a,b)=>
+        a.tag.localeCompare(
+          b.tag,
+          'es',
+          {numeric:true}
+        )
+    );
+
+  ordenados.forEach(r=>{
 
     texto +=
-      r.seccion + ' - ' +
-      r.tag + ' - ' +
-      r.valor + ' ' +
-      r.unidad + '\\n';
+      r.equipo + '   ' +
+      r.tag + '   ' +
+      r.valor + '\\n';
 
   });
 
